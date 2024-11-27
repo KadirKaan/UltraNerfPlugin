@@ -5,7 +5,7 @@
 
 #include <QtWidgets/QWidget>
 
-class QPushButton;
+class Ui_UltraNerfController;
 
 namespace ImFusion
 {
@@ -30,7 +30,7 @@ namespace ImFusion
 		void onCompute();
 
 	protected:
-		UltraNerfAlgorithm *m_alg;				//< The algorithm instance
-		QPushButton *m_computeButton = nullptr; //< Button that is clicked to launch onCompute
+		Ui_UltraNerfController *m_ui; ///< The actual GUI
+		UltraNerfAlgorithm *m_alg;	  //< The algorithm instance
 	};
 }

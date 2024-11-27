@@ -2,7 +2,6 @@
 project(UltraNerfPlugin)
 cmake_minimum_required(VERSION 3.2.0)
 
-set(CMAKE_CXX_STANDARD 11)
 add_compile_options("-fno-sized-deallocation")
 
 # Locate the ImFusion SDK.
@@ -27,6 +26,9 @@ set(Headers
   UltraNerfFactory.h
   UltraNerfPlugin.h
   )
+set(UiSources
+	UltraNerfController.ui
+)
 
 # Define target library
 add_library(UltraNerfPlugin SHARED ${Sources} ${UiHeaders} ${Headers})

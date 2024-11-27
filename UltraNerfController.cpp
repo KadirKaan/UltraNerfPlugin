@@ -6,14 +6,9 @@
 #include <ImFusion/Base/FactoryRegistry.h>
 #include <ImFusion/Base/SharedImageSet.h>
 #include <ImFusion/Core/Log.h>
-#include <ImFusion/CT/GUI/XRay2D3DRegistrationAlgorithmController.h>
-#include <ImFusion/CT/GUI/XRay2D3DRegistrationInitializationController.h>
-#include <ImFusion/CT/GUI/XRay2D3DRegistrationInitializationKeyPointsController.h>
-#include <ImFusion/CT/XRay2D3DRegistrationAlgorithm.h>
 #include <ImFusion/GUI/MainWindowBase.h>
 
-#include <QtWidgets/QHBoxLayout>
-#include <QtWidgets/QPushButton>
+#include "ui_UltraNerfController.h"
 
 // The following sets the log category for this file to "UltraNerfController"
 #undef IMFUSION_LOG_DEFAULT_CATEGORY
@@ -26,26 +21,23 @@ namespace ImFusion
 	UltraNerfController::UltraNerfController(UltraNerfAlgorithm *algorithm)
 		: AlgorithmController(algorithm), m_alg(algorithm)
 	{
-		// Adds a button with which to launch the algorithm
-		m_computeButton = new QPushButton("Compute projections, launch ultra-nerf");
-		this->setLayout(new QHBoxLayout);
-		this->layout()->addWidget(m_computeButton);
-		connect(m_computeButton, SIGNAL(clicked()), this, SLOT(onCompute()));
+		m_ui = new Ui_UltraNerfController();
+		m_ui->setupUi(this);
+		connect(m_ui->pushButtonApply, SIGNAL(clicked()), this, SLOT(onCompute()));
 	}
 
 	void UltraNerfController::onCompute()
 	{
-		// Disable the button created in constructor.
-		if (m_computeButton)
-			m_computeButton->setEnabled(false);
-
+		m_alg->setFactor(m_ui->spinBoxFactor->value());
 		// Call compute on the algorithm
 		m_alg->compute();
 		m_main->dataModel()->add(m_alg->takeOutput());
-		m_computeButton->setEnabled(true);
 	}
 
-	UltraNerfController::~UltraNerfController() {}
+	UltraNerfController::~UltraNerfController()
+	{
+		delete m_ui;
+	}
 
 	void UltraNerfController::init() {}
 }
