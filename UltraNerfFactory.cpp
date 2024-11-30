@@ -6,6 +6,8 @@
 
 #include "UltraNerfInferenceAlgorithm.h"
 #include "UltraNerfInferenceController.h"
+#include <ImFusion/GUI/DefaultAlgorithmController.h>
+
 namespace ImFusion
 {
 	UltraNerfAlgorithmFactory::UltraNerfAlgorithmFactory()
@@ -22,7 +24,7 @@ namespace ImFusion
 			return new UltraNerfTrainingController(alg);
 		// TODO: register inference as well
 		if (UltraNerfInferenceAlgorithm *alg = dynamic_cast<UltraNerfInferenceAlgorithm *>(a))
-			return new UltraNerfInferenceController(alg);
+			return new DefaultAlgorithmController(alg);
 		return 0;
 	}
 }

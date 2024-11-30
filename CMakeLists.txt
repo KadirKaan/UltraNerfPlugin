@@ -4,6 +4,19 @@ cmake_minimum_required(VERSION 3.2.0)
 
 add_compile_options("-fno-sized-deallocation")
 
+
+# Locate Created UltraNerf Wrapper Library
+set(NERF_MODEL_LIBRARY UltraNerfModel/NeRFModel.h)
+set(NERF_MODEL_SOURCE UltraNerfModel/NeRFModel.cpp)
+
+add_library(${NERF_MODEL_LIBRARY} ${NERF_MODEL_SOURCE})
+target_include_directories(${NERF_MODEL_LIBRARY} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+
+find_package(Torch REQUIRED)
+list(APPEND CMAKE_PREFIX_PATH "lib/libtorch")
+include_directories(SYSTEM ${TORCH_INCLUDE_DIRS})
+
 # Locate the ImFusion SDK.
 find_package(ImFusionLib REQUIRED COMPONENTS ImFusionUS)
 
@@ -44,7 +57,10 @@ target_include_directories(UltraNerfPlugin PRIVATE
 target_link_libraries(UltraNerfPlugin PRIVATE
   ImFusionLib
   ImFusionUS
+  ${TORCH_LIBRARIES} 
+  ${NERF_MODEL_LIBRARY}
   )
+ set(CMAKE_CUDA_COMPILER /usr/local/cuda-12.6/bin/nvcc)
 
 # Define output target directories and provide instructions on how to launch
 # the ImFusion Suite with the built custom plugin.

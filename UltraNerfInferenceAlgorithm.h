@@ -12,12 +12,11 @@ namespace ImFusion
 	class UltraNerfInferenceAlgorithm : public Algorithm
 	{
 	public:
-		// Creates the algorithm instance with an image
-		UltraNerfInferenceAlgorithm(SharedImageSet *img);
+		UltraNerfInferenceAlgorithm();
 		~UltraNerfInferenceAlgorithm();
 
 		/// Set downsampling factor
-		void setFactor(int factor) { m_factor = factor; }
+		void setFactor(int factor) { factor = factor; }
 
 		// \name	Methods implementing the algorithm interface
 		//\{
@@ -25,6 +24,7 @@ namespace ImFusion
 		static bool createCompatible(const DataList &data, Algorithm **a = 0);
 
 		void compute() override;
+		void loadModel();
 
 		// If new data was created, make it available here
 		OwningDataList takeOutput() override;
@@ -36,9 +36,13 @@ namespace ImFusion
 		//\}
 
 	private:
-	private:
-		SharedImageSet *m_imgIn = nullptr;		  ///< Input image to process
 		std::unique_ptr<SharedImageSet> m_imgOut; ///< Output image after processing
-		int m_factor = 2;						  ///< Downsampling factor
+		// TODO: derive these
+		float xCoordinate = 0;
+		float yCoordinate = 0;
+		float zCoordinate = 0;
+		float alphaAngle = 0;
+		float omegaAngle = 0;
+		std::string modelPath = "";
 	};
 }

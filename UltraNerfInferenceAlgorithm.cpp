@@ -15,8 +15,7 @@
 
 namespace ImFusion
 {
-	UltraNerfInferenceAlgorithm::UltraNerfInferenceAlgorithm(SharedImageSet *imgIn)
-		: m_imgIn(imgIn)
+	UltraNerfInferenceAlgorithm::UltraNerfInferenceAlgorithm()
 	{
 	}
 
@@ -26,19 +25,11 @@ namespace ImFusion
 
 	bool UltraNerfInferenceAlgorithm::createCompatible(const DataList &data, Algorithm **a)
 	{
-		// check requirements to create the algorithm. In this case, we want to take in a single volume.
-
-		if (data.size() != 1)
-			return false;
-
-		SharedImageSet *img = data.getImage(Data::UNKNOWN);
-		if (img == nullptr)
-			return false;
-
+		// check requirements to create the algorithm. In this case, we can generate whenever we want to (maybe input model file)
 		// requirements are met, create the algorithm if asked
 		if (a)
 		{
-			*a = new UltraNerfInferenceAlgorithm(img);
+			*a = new UltraNerfInferenceAlgorithm();
 		}
 		return true;
 	}
@@ -48,29 +39,14 @@ namespace ImFusion
 	{
 		// set generic error status until we have finished
 		m_status = static_cast<int>(Status::Error);
-
 		m_imgOut = std::make_unique<SharedImageSet>();
-		for (int i = 0; i < m_imgIn->size(); i++)
-		{
-			// Use ImageProcessing functions to perform the downsampling
-			std::unique_ptr<MemImage> newMem = ImageProcessing::createDownsampled(*m_imgIn->mem(i), m_factor, m_factor);
-
-			// create a SharedImage to hold newMem and copy over modality and transformation matrix
-			// NOTE: if we had cloned m_imgIn initially, we would not need to to these steps
-			auto sharedImage = std::make_unique<SharedImage>(std::move(newMem));
-			sharedImage->setModality(m_imgIn->get(i)->modality());
-			sharedImage->setMatrix(m_imgIn->get(i)->matrix());
-
-			// compute never returns data directly - instead,
-			// the output method needs to be called, which
-			// fills a list of output data - see below
-			m_imgOut->add(std::move(sharedImage));
-		}
-
 		// set algorithm status to success
 		m_status = static_cast<int>(Status::Success);
 	}
 
+	void UltraNerfInferenceAlgorithm::loadModel()
+	{
+	}
 	OwningDataList UltraNerfInferenceAlgorithm::takeOutput()
 	{
 		// if we have produced some output, add it to the list
@@ -83,7 +59,13 @@ namespace ImFusion
 		if (p == nullptr)
 			return;
 
-		p->param("factor", m_factor);
+		p->param("xCoordinate", xCoordinate);
+		p->param("yCoordinate", yCoordinate);
+		p->param("zCoordinate", zCoordinate);
+		p->param("alphaAngle", alphaAngle);
+		p->param("omegaAngle", omegaAngle);
+		p->param("modelPath", modelPath);
+
 		signalParametersChanged.emitSignal();
 	}
 
@@ -93,6 +75,10 @@ namespace ImFusion
 		if (p == nullptr)
 			return;
 
-		p->setParam("factor", m_factor, 2);
+		p->setParam("xCoordinate", xCoordinate, 0.f);
+		p->setParam("yCoordinate", yCoordinate, 0.f);
+		p->setParam("zCoordinate", zCoordinate, 0.f);
+		p->setParam("alphaAngle", alphaAngle, 0.f);
+		p->setParam("omegaAngle", omegaAngle, 0.f);
 	}
 }
