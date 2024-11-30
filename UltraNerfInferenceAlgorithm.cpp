@@ -1,4 +1,4 @@
-#include "UltraNerfAlgorithm.h"
+#include "UltraNerfInferenceAlgorithm.h"
 
 #include <ImFusion/Base/DataList.h>
 #include <ImFusion/Base/ImageProcessing.h>
@@ -15,16 +15,16 @@
 
 namespace ImFusion
 {
-	UltraNerfAlgorithm::UltraNerfAlgorithm(SharedImageSet *imgIn)
+	UltraNerfInferenceAlgorithm::UltraNerfInferenceAlgorithm(SharedImageSet *imgIn)
 		: m_imgIn(imgIn)
 	{
 	}
 
-	UltraNerfAlgorithm::~UltraNerfAlgorithm()
+	UltraNerfInferenceAlgorithm::~UltraNerfInferenceAlgorithm()
 	{
 	}
 
-	bool UltraNerfAlgorithm::createCompatible(const DataList &data, Algorithm **a)
+	bool UltraNerfInferenceAlgorithm::createCompatible(const DataList &data, Algorithm **a)
 	{
 		// check requirements to create the algorithm. In this case, we want to take in a single volume.
 
@@ -38,13 +38,13 @@ namespace ImFusion
 		// requirements are met, create the algorithm if asked
 		if (a)
 		{
-			*a = new UltraNerfAlgorithm(img);
+			*a = new UltraNerfInferenceAlgorithm(img);
 		}
 		return true;
 	}
 
 	// This function does all of the work of this class
-	void UltraNerfAlgorithm::compute()
+	void UltraNerfInferenceAlgorithm::compute()
 	{
 		// set generic error status until we have finished
 		m_status = static_cast<int>(Status::Error);
@@ -71,13 +71,13 @@ namespace ImFusion
 		m_status = static_cast<int>(Status::Success);
 	}
 
-	OwningDataList UltraNerfAlgorithm::takeOutput()
+	OwningDataList UltraNerfInferenceAlgorithm::takeOutput()
 	{
 		// if we have produced some output, add it to the list
 		return OwningDataList(std::move(m_imgOut));
 	}
 
-	void UltraNerfAlgorithm::configure(const Properties *p)
+	void UltraNerfInferenceAlgorithm::configure(const Properties *p)
 	{
 		// this method restores our members when a workspace file is loaded
 		if (p == nullptr)
@@ -87,7 +87,7 @@ namespace ImFusion
 		signalParametersChanged.emitSignal();
 	}
 
-	void UltraNerfAlgorithm::configuration(Properties *p) const
+	void UltraNerfInferenceAlgorithm::configuration(Properties *p) const
 	{
 		// this method is necessary to store our settings in a workspace file
 		if (p == nullptr)

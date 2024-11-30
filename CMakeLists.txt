@@ -15,19 +15,24 @@ set(CMAKE_AUTOUIC ON)
 
 # Define and configure the CMake target
 set(Sources
-  UltraNerfAlgorithm.cpp
-  UltraNerfController.cpp
+  UltraNerfTrainingAlgorithm.cpp
+  UltraNerfTrainingController.cpp
+  UltraNerfInferenceAlgorithm.cpp
+  UltraNerfInferenceController.cpp
   UltraNerfFactory.cpp
   UltraNerfPlugin.cpp
   )
 set(Headers
-  UltraNerfAlgorithm.h
-  UltraNerfController.h
+  UltraNerfTrainingAlgorithm.h
+  UltraNerfTrainingController.h
+  UltraNerfInferenceAlgorithm.h
+  UltraNerfInferenceController.h
   UltraNerfFactory.h
   UltraNerfPlugin.h
   )
 set(UiSources
-	UltraNerfController.ui
+	UltraNerfTrainingController.ui
+  UltraNerfInferenceController.ui
 )
 
 # Define target library

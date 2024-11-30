@@ -9,12 +9,12 @@ namespace ImFusion
 {
 	class SharedImageSet;
 
-	class UltraNerfAlgorithm : public Algorithm
+	class UltraNerfInferenceAlgorithm : public Algorithm
 	{
 	public:
 		// Creates the algorithm instance with an image
-		UltraNerfAlgorithm(SharedImageSet *img);
-		~UltraNerfAlgorithm();
+		UltraNerfInferenceAlgorithm(SharedImageSet *img);
+		~UltraNerfInferenceAlgorithm();
 
 		/// Set downsampling factor
 		void setFactor(int factor) { m_factor = factor; }
