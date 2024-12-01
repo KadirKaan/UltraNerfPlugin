@@ -24,7 +24,7 @@ namespace ImFusion
 			return new UltraNerfTrainingController(alg);
 		// TODO: register inference as well
 		if (UltraNerfInferenceAlgorithm *alg = dynamic_cast<UltraNerfInferenceAlgorithm *>(a))
-			return new DefaultAlgorithmController(alg);
+			return new UltraNerfInferenceController(alg);
 		return 0;
 	}
 }

@@ -46,6 +46,8 @@ namespace ImFusion
 
 	void UltraNerfInferenceAlgorithm::loadModel()
 	{
+		std::string modelPath = this->modelPath;
+		this->model = this->model.load(modelPath);
 	}
 	OwningDataList UltraNerfInferenceAlgorithm::takeOutput()
 	{
@@ -62,8 +64,6 @@ namespace ImFusion
 		p->param("xCoordinate", xCoordinate);
 		p->param("yCoordinate", yCoordinate);
 		p->param("zCoordinate", zCoordinate);
-		p->param("alphaAngle", alphaAngle);
-		p->param("omegaAngle", omegaAngle);
 		p->param("modelPath", modelPath);
 
 		signalParametersChanged.emitSignal();
@@ -78,7 +78,6 @@ namespace ImFusion
 		p->setParam("xCoordinate", xCoordinate, 0.f);
 		p->setParam("yCoordinate", yCoordinate, 0.f);
 		p->setParam("zCoordinate", zCoordinate, 0.f);
-		p->setParam("alphaAngle", alphaAngle, 0.f);
-		p->setParam("omegaAngle", omegaAngle, 0.f);
+		p->setParam("modelPath", modelPath, "");
 	}
 }

@@ -28,6 +28,7 @@ namespace ImFusion
 
 	public slots:
 		void onCompute();
+		void onLoadModel();
 
 	protected:
 		Ui_UltraNerfInferenceController *m_ui; ///< The actual GUI

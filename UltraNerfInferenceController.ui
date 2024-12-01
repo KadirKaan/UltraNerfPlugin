@@ -1,70 +1,132 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>UltraNerfInferenceController</class>
- <widget class="QWidget" name="UltraNerf_Inference_Controller">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>186</width>
-    <height>99</height>
-   </rect>
-  </property>
-  <property name="windowTitle">
-   <string>Demo Algorithm</string>
-  </property>
-  <layout class="QGridLayout" name="gridLayout">
-   <property name="leftMargin">
-    <number>9</number>
-   </property>
-   <property name="topMargin">
-    <number>9</number>
-   </property>
-   <property name="rightMargin">
-    <number>9</number>
-   </property>
-   <property name="bottomMargin">
-    <number>9</number>
-   </property>
-   <item row="1" column="1">
-    <widget class="QSpinBox" name="spinBoxFactor">
-     <property name="minimum">
-      <number>2</number>
-     </property>
-     <property name="maximum">
-      <number>4</number>
-     </property>
-     <property name="singleStep">
-      <number>2</number>
-     </property>
+    <class>UltraNerfInferenceController</class>
+    <widget class="QWidget" name="UltraNerf_Inference_Controller">
+        <property name="geometry">
+            <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>186</width>
+                <height>99</height>
+            </rect>
+        </property>
+        <property name="windowTitle">
+            <string>UltraNerf Inference</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout">
+            <property name="leftMargin">
+                <number>9</number>
+            </property>
+            <property name="topMargin">
+                <number>9</number>
+            </property>
+            <property name="rightMargin">
+                <number>9</number>
+            </property>
+            <property name="bottomMargin">
+                <number>9</number>
+            </property>
+            <item row="1" column="1">
+                <widget class="QSpinBox" name="xCoordinate">
+                    <property name="minimum">
+                        <number>2</number>
+                    </property>
+                    <property name="maximum">
+                        <number>4</number>
+                    </property>
+                    <property name="singleStep">
+                        <number>2</number>
+                    </property>
+                </widget>
+            </item>
+            <item row="1" column="0">
+                <widget class="QLabel" name="labelX">
+                    <property name="text">
+                        <string>X Coordinate(In some units)</string>
+                    </property>
+                </widget>
+            </item>
+            <item row="2" column="1">
+                <widget class="QSpinBox" name="yCoordinate">
+                    <property name="minimum">
+                        <number>2</number>
+                    </property>
+                    <property name="maximum">
+                        <number>4</number>
+                    </property>
+                    <property name="singleStep">
+                        <number>2</number>
+                    </property>
+                </widget>
+            </item>
+            <item row="2" column="0">
+                <widget class="QLabel" name="labelY">
+                    <property name="text">
+                        <string>Y Coordinate(In some units)</string>
+                    </property>
+                </widget>
+            </item>
+            <item row="3" column="1">
+                <widget class="QSpinBox" name="zCoordinate">
+                    <property name="minimum">
+                        <number>2</number>
+                    </property>
+                    <property name="maximum">
+                        <number>4</number>
+                    </property>
+                    <property name="singleStep">
+                        <number>2</number>
+                    </property>
+                </widget>
+            </item>
+            <item row="3" column="0">
+                <widget class="QLabel" name="labelZ">
+                    <property name="text">
+                        <string>Z Coordinate(In some units)</string>
+                    </property>
+                </widget>
+            </item>
+
+            <item row="4" column="0">
+                <widget class="QLabel" name="label">
+                    <property name="text">
+                        <string>Model Path</string>
+                    </property>
+                </widget>
+            </item>
+
+            <item row="4" column="1">
+                <widget class="QLineEdit" name="modelPath">
+                </widget>
+            </item>
+
+            <item row="5" column="0" colspan="2">
+                <widget class="QPushButton" name="pushButtonLoadModel">
+                    <property name="text">
+                        <string>Load Model</string>
+                    </property>
+                </widget>
+            </item>
+
+            <item row="6" column="0" colspan="2">
+                <widget class="QPushButton" name="pushButtonRunModel">
+                    <property name="text">
+                        <string>Create View</string>
+                    </property>
+                </widget>
+            </item>
+            <item row="0" column="0" colspan="2">
+                <widget class="QLabel" name="label_2">
+                    <property name="text">
+                        <string>This algorithm creates views on a pretrained UltraNeRF model</string>
+                    </property>
+                    <property name="wordWrap">
+                        <bool>true</bool>
+                    </property>
+                </widget>
+            </item>
+        </layout>
     </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>Factor</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0" colspan="2">
-    <widget class="QPushButton" name="pushButtonApply">
-     <property name="text">
-      <string>Apply</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="0" colspan="2">
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string>This demo algorithm downsamples an image by the specified factor</string>
-     </property>
-     <property name="wordWrap">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-  </layout>
- </widget>
- <resources/>
- <connections/>
+    <resources />
+    <connections />
 </ui>

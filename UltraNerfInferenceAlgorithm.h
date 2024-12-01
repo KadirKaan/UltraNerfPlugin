@@ -2,9 +2,8 @@
 #pragma once
 
 #include <ImFusion/Base/Algorithm.h>
-
+#include <UltraNerfTorch/include/NeRFModel.h>
 #include <memory>
-
 namespace ImFusion
 {
 	class SharedImageSet;
@@ -15,8 +14,13 @@ namespace ImFusion
 		UltraNerfInferenceAlgorithm();
 		~UltraNerfInferenceAlgorithm();
 
-		/// Set downsampling factor
-		void setFactor(int factor) { factor = factor; }
+		void setModelPath(std::string modelPath) { this->modelPath = modelPath; }
+		void setCoordinates(float x, float y, float z)
+		{
+			this->xCoordinate = x;
+			this->yCoordinate = y;
+			this->zCoordinate = z;
+		}
 
 		// \name	Methods implementing the algorithm interface
 		//\{
@@ -41,8 +45,7 @@ namespace ImFusion
 		float xCoordinate = 0;
 		float yCoordinate = 0;
 		float zCoordinate = 0;
-		float alphaAngle = 0;
-		float omegaAngle = 0;
+		NeRFModel model = NeRFModel();
 		std::string modelPath = "";
 	};
 }

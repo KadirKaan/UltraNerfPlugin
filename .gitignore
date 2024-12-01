@@ -1,2 +1,9 @@
 #Build Files
 /build
+UltraNerfTorch/build
+
+#Lib files
+UltraNerfTorch/libtorch
+
+.vscode
+.idea

@@ -24,14 +24,22 @@ namespace ImFusion
 		m_ui = new Ui_UltraNerfInferenceController();
 		m_ui->setupUi(this);
 		// TODO
-		connect(m_ui->pushButtonApply, SIGNAL(clicked()), this, SLOT(onCompute()));
+		connect(m_ui->pushButtonRunModel, SIGNAL(clicked()), this, SLOT(onCompute()));
+		connect(m_ui->pushButtonLoadModel, SIGNAL(clicked()), this, SLOT(onLoadModel()));
 	}
 
 	void UltraNerfInferenceController::onCompute()
 	{
-		m_alg->setFactor(m_ui->spinBoxFactor->value());
+		m_alg->setCoordinates(m_ui->xCoordinate->value(), m_ui->yCoordinate->value(), m_ui->zCoordinate->value());
 		// Call compute on the algorithm
 		m_alg->compute();
+		m_main->dataModel()->add(m_alg->takeOutput());
+	}
+	void UltraNerfInferenceController::onLoadModel()
+	{
+		m_alg->setModelPath(m_ui->modelPath->text().toStdString());
+		// Call compute on the algorithm
+		m_alg->loadModel();
 		m_main->dataModel()->add(m_alg->takeOutput());
 	}
 
