@@ -93,16 +93,7 @@ torch::Tensor createThetaRotationMatrix(float theta)
                        {0.0f, 0.0f, 0.0f, 1.0f}});
     return thetaMat;
 } */
-
-std::vector<torch::jit::IValue> convertToIValues(const torch::Tensor &tensor, int dim)
+torch::Device getDevice()
 {
-    std::vector<torch::Tensor> tensorList = tensor.unbind(dim);
-    std::vector<torch::jit::IValue> ivalueVector;
-
-    std::transform(tensorList.begin(), tensorList.end(),
-                   std::back_inserter(ivalueVector),
-                   [](const torch::Tensor &t)
-                   { return t; });
-
-    return ivalueVector;
+    return torch::cuda::is_available() ? torch::kCUDA : torch::kCPU;
 }

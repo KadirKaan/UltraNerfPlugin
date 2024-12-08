@@ -1,33 +1,34 @@
 #include "NeRFModel.h"
 #include "NeRFUtils.h"
 
-void NeRFModel::registerModule(torch::jit::script::Module module)
+NeRFModel::NeRFModel(const torch::Device &device, int D, int W, int embeddingLevel)
+    : device_(device), embeddingLevel_(embeddingLevel)
 {
-    torch::cuda::is_available() ? (this->device = torch::Device(torch::kCUDA)) : (this->device = torch::Device(torch::kCPU));
-    module.to(device);
-    module.eval();
-    this->module = module;
-}
-// TODO: probably may need to do error checking, also maybe casting
-torch::Tensor NeRFModel::forward(std::vector<torch::jit::IValue> &inputs)
-{
-    // Move targets to device
-    for_each(inputs.begin(), inputs.end(), [this](torch::jit::IValue &input)
-             { input.toTensor().to(device); });
-    torch::Tensor output = module.forward(inputs).toTensor();
-    return output;
+    // Create FFN
+    auto inputDim = 3 + 3 * 2 * embeddingLevel_;
+    model_->push_back(torch::nn::Linear(inputDim, W));
+    model_->push_back(torch::nn::Functional(torch::relu));
+    for (int i = 0; i < D - 2; i++)
+    {
+        model_->push_back(torch::nn::Linear(W, W));
+        model_->push_back(torch::nn::Functional(torch::relu));
+    }
+    model_->push_back(torch::nn::Linear(W, 4));
+    model_->to(device);
+    register_module("model", model_);
+    this->initialized_ = false;
+    this->to(device_);
 }
 
 torch::Tensor NeRFModel::forward(torch::Tensor &inputs)
 {
-    auto inputsIvalue = convertToIValues(inputs);
-    torch::Tensor output = module.forward(inputsIvalue).toTensor();
+    torch::Tensor output = model_->forward(inputs);
     return output;
 }
 void NeRFModel::load(std::string path)
 {
-    this->registerModule(torch::jit::load(path));
-    this->initialized = true;
+    torch::load(this->model_, path);
+    this->initialized_ = true;
 }
 
 /**
@@ -42,7 +43,7 @@ void NeRFModel::load(std::string path)
 torch::Tensor NeRFModel::addPositionalEncoding(const torch::Tensor &x) const
 {
     std::vector<torch::Tensor> enc = {x};
-    for (int i = 0; i < embeddingLevel; i++)
+    for (int i = 0; i < embeddingLevel_; i++)
     {
         enc.push_back(torch::sin(std::pow(2.0f, i) * x));
         enc.push_back(torch::cos(std::pow(2.0f, i) * x));
@@ -50,5 +51,5 @@ torch::Tensor NeRFModel::addPositionalEncoding(const torch::Tensor &x) const
     return torch::cat(enc, -1);
 }
 
-torch::Device NeRFModel::getDevice() { return device; }
-bool NeRFModel::isInitialized() { return initialized; }
+torch::Device NeRFModel::getDevice() { return device_; }
+bool NeRFModel::isInitialized() { return initialized_; }

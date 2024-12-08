@@ -25,6 +25,5 @@ torch::Tensor createPhiRotationMatrix(float phi);
 torch::Tensor createThetaRotationMatrix(float theta); */
 
 // needed to convert torch::Tensor to torch::jit::IValue for torchscript
-std::vector<torch::jit::IValue> convertToIValues(const torch::Tensor &tensor, int dim = 0);
-
+torch::Device getDevice();
 #endif

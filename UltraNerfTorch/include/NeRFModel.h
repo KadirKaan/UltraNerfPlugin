@@ -6,12 +6,10 @@
 #include <torch/torch.h>
 #include <torch/script.h>
 #define slots Q_SLOTS
-class NeRFModel
+class NeRFModel : public torch::nn::Module
 {
 public:
-    void registerModule(torch::jit::script::Module module);
-    NeRFModel();
-    torch::Tensor forward(std::vector<torch::jit::IValue> &inputs);
+    NeRFModel(const torch::Device &device, int D = 8, int W = 256, int embeddingLevel = 6);
     torch::Tensor forward(torch::Tensor &inputs);
     void load(std::string path);
     torch::Device getDevice();
@@ -20,10 +18,9 @@ public:
 
 private:
     // TODO: maybe use nn module
-    // jit module is used to import from pytorch
-    torch::jit::script::Module module;
-    torch::Device &device;
-    bool initialized = false;
-    int embeddingLevel = 6;
+    torch::nn::Sequential model_;
+    const torch::Device &device_;
+    bool initialized_ = false;
+    int embeddingLevel_ = 6;
 };
 #endif
