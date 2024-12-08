@@ -39,6 +39,13 @@ namespace ImFusion
 	{
 		// set generic error status until we have finished
 		m_status = static_cast<int>(Status::Error);
+		if (!model.isInitialized())
+		{
+			return;
+		}
+		// TODO: preprocessing
+		// model.forward({xCoordinate, yCoordinate, zCoordinate});
+		// TODO: postprocessing
 		m_imgOut = std::make_unique<SharedImageSet>();
 		// set algorithm status to success
 		m_status = static_cast<int>(Status::Success);
@@ -47,7 +54,7 @@ namespace ImFusion
 	void UltraNerfInferenceAlgorithm::loadModel()
 	{
 		std::string modelPath = this->modelPath;
-		this->model = this->model.load(modelPath);
+		this->model.load(modelPath);
 	}
 	OwningDataList UltraNerfInferenceAlgorithm::takeOutput()
 	{

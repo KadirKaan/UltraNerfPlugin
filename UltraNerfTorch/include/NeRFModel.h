@@ -8,14 +8,22 @@
 #define slots Q_SLOTS
 class NeRFModel
 {
-    torch::jit::Module module;
-    torch::Device device = torch::Device(torch::kCUDA);
-
 public:
-    NeRFModel(torch::jit::script::Module module);
+    void registerModule(torch::jit::script::Module module);
     NeRFModel();
-    torch::Tensor infer(std::vector<torch::jit::IValue> inputs);
-    NeRFModel load(std::string path, bool toCuda = true);
+    torch::Tensor forward(std::vector<torch::jit::IValue> &inputs);
+    torch::Tensor forward(torch::Tensor &inputs);
+    void load(std::string path);
     torch::Device getDevice();
+    bool isInitialized();
+    torch::Tensor addPositionalEncoding(const torch::Tensor &x) const;
+
+private:
+    // TODO: maybe use nn module
+    // jit module is used to import from pytorch
+    torch::jit::script::Module module;
+    torch::Device &device;
+    bool initialized = false;
+    int embeddingLevel = 6;
 };
 #endif
