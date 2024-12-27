@@ -1,57 +1,124 @@
-#include "NeRFRenderer.h"
+#include "UltraNeRFRenderer.h"
 #include "NeRFUtils.h"
 
 using namespace torch::indexing;
 
-NeRFRenderer::NeRFRenderer(NeRFModel &model)
+UltraNeRFRenderer::UltraNeRFRenderer(NeRFModel &model, int H, int W, float sw, float sh) : NeRFRenderer(model, H, W, sw, sh)
 {
-    network_fn_ = model.get_network_fn();
-    network_query_fn_ = model.get_network_query_fn();
-    // todo get network and network_query from model
-    // maybe remove model from NeRFRenderer and pass it as a parameter
+    this->gaussian_kernel = create_gaussian_kernel(3, 0.0, 1.0);
+};
+std::pair<torch::Tensor, torch::Tensor> UltraNeRFRenderer::get_rays(const std::optional<std::vector<torch::Tensor>> &c2w,
+                                                                    const std::optional<std::pair<torch::Tensor, torch::Tensor>> &input_rays)
+{
+
+    // Validate input: either rays or c2w must be provided
+    if (!input_rays.has_value() && !c2w.has_value())
+    {
+        throw std::invalid_argument("Either rays or c2w must be provided");
+    }
+    torch::Tensor rays_o, rays_d;
+    if (c2w.has_value())
+    {
+        // Special case to render full image
+        for (const auto &c : c2w.value())
+        {
+            auto [o, d] = generate_linear_us_rays(c);
+
+            if (!rays_o.defined())
+            {
+                rays_o = o;
+                rays_d = d;
+            }
+            else
+            {
+                rays_o = torch::cat({rays_o, o}, 0);
+                rays_d = torch::cat({rays_d, d}, 0);
+            }
+        }
+    }
+    else
+    {
+        // Use provided ray batch
+        auto [o, d] = input_rays.value();
+        rays_o = o;
+        rays_d = d;
+    }
+    return std::pair{rays_o, rays_d};
 }
 
-torch::Dict<std::string, torch::Tensor> NeRFRenderer::batchify_rays(
-    torch::Tensor rays_flat,
-    int chunk = 1024 * 32,
-    int N_samples = 1)
+std::vector<torch::Tensor> UltraNeRFRenderer::batchify_rays(torch::Tensor rays_flat, int N_samples = 1)
 {
-    torch::Dict<std::string, torch::Tensor> all_ret;
-
+    std::vector<torch::Tensor> ray_batches = std::vector<torch::Tensor>();
     // Iterate through rays in chunks
     for (int i = 0; i < rays_flat.size(0); i += chunk)
     {
         // Get chunk of rays
         int end_idx = std::min(i + chunk, static_cast<int>(rays_flat.size(0)));
         torch::Tensor rays_chunk = rays_flat.slice(0, i, end_idx);
-        torch::Dict<std::string, std::vector<torch::Tensor>> all_ret;
+        ray_batches.push_back(rays_chunk);
+    }
+    return ray_batches;
+}
+torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::render_ray_batches(std::vector<torch::Tensor> ray_batches, int N_samples = 1)
+{
+    torch::Dict<std::string, torch::Tensor> render_results = torch::Dict<std::string, torch::Tensor>();
 
-        // Call render_rays_us with the chunk
-        auto ret = render_rays_us(rays_chunk, N_samples);
-
-        // Accumulate results
-        for (auto it = ret.begin(); it != ret.end(); ++it)
-        {
-            if (all_ret.find(it->key()) == all_ret.end())
-            {
-                // First time seeing this key, create a list to accumulate
-                all_ret.insert(it->key(), std::vector<torch::Tensor>());
-            }
-            all_ret.find(it->key())->value().push_back(it->value());
-        }
+    for (auto rays_chunk : ray_batches)
+    {
+        auto raw_ray_chunks = pass_rays_to_nerf(rays_chunk, N_samples);
+        auto rendered_ray_chunks = process_raw_rays(raw_ray_chunks);
+        accumulate_rays(render_results, rendered_ray_chunks);
     }
 
     // Concatenate results for each key
-    torch::Dict<std::string, torch::Tensor> final_ret;
-    for (auto it = all_ret.begin(); it != all_ret.end(); ++it)
+    torch::Dict<std::string, torch::Tensor> flat_render_results = torch::Dict<std::string, torch::Tensor>();
+    for (auto it = render_results.begin(); it != render_results.end(); ++it)
     {
-        final_ret.insert(it->key(), torch::cat(it->value(), 0));
+        flat_render_results.insert(it->key(), torch::cat(it->value(), 0));
     }
-    return final_ret;
+    return flat_render_results;
 }
-// TODO: 1 to 1 mapping of funcs in python, format them later
-std::pair<torch::Tensor, torch::Tensor> get_rays_us_linear(
-    int H, int W, float sw, float sh, torch::Tensor c2w)
+torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::render_nerf(
+    std::optional<std::pair<torch::Tensor, torch::Tensor>> input_rays = std::nullopt,
+    std::optional<std::vector<torch::Tensor>> c2w = std::nullopt)
+{
+
+    std::pair<torch::Tensor, torch::Tensor> rays = get_rays(c2w, input_rays);
+    torch::Tensor rays_o = rays.first;
+    torch::Tensor rays_d = rays.second;
+
+    // Reshape rays
+    auto sh = rays_d.sizes();
+    rays_o = rays_o.reshape({-1, 3}).to(torch::kFloat32);
+    rays_d = rays_d.reshape({-1, 3}).to(torch::kFloat32);
+
+    // Create near and far tensors
+    auto near_tensor = torch::ones_like(rays_d.index({torch::indexing::Slice(), torch::indexing::Slice(0, 1)})) * near;
+    auto far_tensor = torch::ones_like(rays_d.index({torch::indexing::Slice(), torch::indexing::Slice(0, 1)})) * far;
+
+    // Concatenate rays information
+    torch::Tensor concat_rays = torch::cat({rays_o, rays_d, near_tensor, far_tensor}, /*dim=*/-1);
+
+    auto ray_batches = batchify_rays(concat_rays, chunk);
+    torch::Dict<std::string, torch::Tensor> render_results = render_ray_batches(ray_batches);
+    return render_results;
+}
+
+void accumulate_rays(torch::Dict<std::string, torch::Tensor> &render_results, torch::Dict<std::string, torch::Tensor> batch_render_results)
+{
+    // Accumulate results
+    for (auto it = batch_render_results.begin(); it != batch_render_results.end(); ++it)
+    {
+        if (render_results.find(it->key()) == render_results.end())
+        {
+            // First time seeing this key, create a list to accumulate
+            render_results.insert(it->key(), std::vector<torch::Tensor>());
+        }
+        render_results.find(it->key())->value().add(it->value());
+    }
+}
+
+std::pair<torch::Tensor, torch::Tensor> UltraNeRFRenderer::generate_linear_us_rays(const torch::Tensor &c2w)
 {
     // Extract translation and rotation from camera-to-world matrix
     torch::Tensor t = c2w.index({torch::indexing::Slice(0, 3), -1});
@@ -79,31 +146,31 @@ std::pair<torch::Tensor, torch::Tensor> get_rays_us_linear(
     return {rays_o, rays_d};
 };
 
-torch::Dict<std::string, torch::Tensor> NeRFRenderer::render_rays_us(
+/**
+ * Pass a batch of rays to the NeRF model.
+ *
+ * Given a batch of rays, sample along each ray and evaluate the model at each point.
+ * The model is queried with the points in space where the rays intersect the scene.
+ *
+ * @param ray_batch A tensor of shape `(N_rays, 8)` containing the origin and direction of each ray.
+ * @param N_samples The number of samples to take along each ray.
+ * @param retraw Whether to use the raw RGB and density values from the model.
+ * @param lindisp Whether to use linear disparity (1/depth) instead of real depth.
+ *
+ * @return A tensor of shape `(N_rays, N_samples, 4)` containing the raw RGB and density values for each sample.
+ */
+torch::Tensor UltraNeRFRenderer::pass_rays_to_nerf(
     torch::Tensor ray_batch,
     int N_samples,
     bool retraw = false,
     bool lindisp = false)
 {
-    // Helper function to transform model predictions
-    auto raw2outputs = [](torch::Tensor raw)
-    {
-        return render_method_ultra_nerf(raw);
-    };
-
     // Batch size
     int N_rays = ray_batch.size(0);
 
     // Extract ray origin and direction
     torch::Tensor rays_o = ray_batch.index({torch::indexing::Slice(), torch::indexing::Slice(0, 3)});
     torch::Tensor rays_d = ray_batch.index({torch::indexing::Slice(), torch::indexing::Slice(3, 6)});
-
-    // Extract viewing direction
-    std::optional<torch::Tensor> viewdirs = std::nullopt;
-    if (ray_batch.size(-1) > 8)
-    {
-        viewdirs = ray_batch.index({torch::indexing::Slice(), torch::indexing::Slice(-3, std::nullopt)});
-    }
 
     // Extract bounds
     torch::Tensor bounds = ray_batch.index({torch::indexing::Ellipsis, torch::indexing::Slice(6, 8)}).reshape({-1, 1, 2});
@@ -130,85 +197,36 @@ torch::Dict<std::string, torch::Tensor> NeRFRenderer::render_rays_us(
     torch::Tensor pts = step + origin;
 
     // Evaluate model at each point
-    torch::Tensor raw = this->network_query_fn_(pts, network_fn_);
+    torch::Tensor raw = this->model.forward(pts);
 
-    // Transform raw predictions
-    auto ret = raw2outputs(raw);
-
-    return ret;
-}
-
-torch::Dict<std::string, torch::Tensor> NeRFRenderer::render_us(
-    int H, int W,
-    float sw, float sh,
-    int chunk = 1024 * 32,
-    std::optional<std::pair<torch::Tensor, torch::Tensor>> rays = std::nullopt,
-    std::optional<std::vector<torch::Tensor>> c2w = std::nullopt,
-    float near = 0.0,
-    float far = 55.0 * 0.001)
-{
-    // Validate input: either rays or c2w must be provided
-    if (!rays.has_value() && !c2w.has_value())
-    {
-        throw std::invalid_argument("Either rays or c2w must be provided");
-    }
-
-    torch::Tensor rays_o, rays_d;
-
-    if (c2w.has_value())
-    {
-        // Special case to render full image
-        for (const auto &c : c2w.value())
-        {
-            auto [o, d] = get_rays_us_linear(H, W, sw, sh, c);
-
-            if (!rays_o.defined())
-            {
-                rays_o = o;
-                rays_d = d;
-            }
-            else
-            {
-                rays_o = torch::cat({rays_o, o}, 0);
-                rays_d = torch::cat({rays_d, d}, 0);
-            }
-        }
-    }
-    else
-    {
-        // Use provided ray batch
-        auto [o, d] = rays.value();
-        rays_o = o;
-        rays_d = d;
-    }
-
-    // Reshape rays
-    auto sh = rays_d.sizes();
-    rays_o = rays_o.reshape({-1, 3}).to(torch::kFloat32);
-    rays_d = rays_d.reshape({-1, 3}).to(torch::kFloat32);
-
-    // Create near and far tensors
-    auto near_tensor = torch::ones_like(rays_d.index({torch::indexing::Slice(), torch::indexing::Slice(0, 1)})) * near;
-    auto far_tensor = torch::ones_like(rays_d.index({torch::indexing::Slice(), torch::indexing::Slice(0, 1)})) * far;
-
-    // Concatenate rays information
-    torch::Tensor concat_rays = torch::cat({rays_o, rays_d, near_tensor, far_tensor}, /*dim=*/-1);
-
-    auto all_ret = batchify_rays(concat_rays, chunk);
-    return all_ret;
+    return raw;
 }
 
 // Assuming these are defined elsewhere or need to be added
-torch::Tensor cumprod_exclusive(torch::Tensor tensor);
-torch::Tensor g_kernel; // Global convolution kernel
-
-torch::Dict<std::string, torch::Tensor> render_method_ultra_nerf(torch::Tensor raw)
+// Mimics tf.math.cumprod(..., exclusive=True)
+torch::Tensor cumprod_exclusive(torch::Tensor tensor)
 {
-    // Helper function
-    auto raw2attention = [](torch::Tensor raw, torch::Tensor dists)
-    {
-        return torch::exp(-raw * dists);
-    };
+    // Works only for the last dimension (dim=-1)
+    const int dim = -1;
+
+    // Compute regular cumprod first (equivalent to tf.math.cumprod(..., exclusive=False))
+    torch::Tensor cumprod = torch::cumprod(tensor, dim);
+
+    // "Roll" the elements along dimension 'dim' by 1 element
+    cumprod = torch::roll(cumprod, 1, dim);
+
+    // Replace the first element with 1
+    // Using indexing to set the first element of the last dimension to 1
+    cumprod.index_put_({torch::indexing::Ellipsis, 0}, 1.0);
+
+    return cumprod;
+}
+// Global convolution kernel
+// Generates a 2D Gaussian kernel
+
+torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::process_raw_rays(torch::Tensor raw)
+{
+    this->gaussian_kernel = gaussian_kernel.to(raw.device());
 
     // Preprocessing raw tensor
     raw = raw.unsqueeze(0).unsqueeze(1);
@@ -233,7 +251,7 @@ torch::Dict<std::string, torch::Tensor> render_method_ultra_nerf(torch::Tensor r
 
     // Attenuation
     torch::Tensor attenuation_coeff = torch::abs(raw.index({torch::indexing::Ellipsis, 0}));
-    torch::Tensor attenuation = raw2attention(attenuation_coeff, dists);
+    torch::Tensor attenuation = raw2attenuation(attenuation_coeff, dists);
     attenuation = attenuation.permute({0, 1, 3, 2});
     torch::Tensor attenuation_total = cumprod_exclusive(attenuation);
     attenuation_total = attenuation_total.permute({0, 1, 3, 2});
@@ -263,7 +281,7 @@ torch::Dict<std::string, torch::Tensor> render_method_ultra_nerf(torch::Tensor r
     // Convolution (assuming g_kernel is available)
     torch::Tensor psf_scatter = torch::nn::functional::conv2d(
                                     scatterers_map.unsqueeze(0).unsqueeze(0),
-                                    g_kernel.unsqueeze(0).unsqueeze(0),
+                                    gaussian_kernel.unsqueeze(0).unsqueeze(0),
                                     torch::nn::functional::Conv2dFuncOptions().stride(1).padding(1))
                                     .squeeze();
 
@@ -290,3 +308,9 @@ torch::Dict<std::string, torch::Tensor> render_method_ultra_nerf(torch::Tensor r
     results.insert("r", r);
     results.insert("confidence_maps", confidence_maps);
 }
+
+// Helper function
+auto raw2attenuation(torch::Tensor raw, torch::Tensor dists)
+{
+    return torch::exp(-raw * dists);
+};

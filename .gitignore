@@ -1,6 +1,7 @@
 #Build Files
 /build
 UltraNerfTorch/build
+/cmake-build-debug
 
 #Lib files
 UltraNerfTorch/libtorch

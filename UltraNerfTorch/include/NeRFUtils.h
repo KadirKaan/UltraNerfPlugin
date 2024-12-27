@@ -25,5 +25,6 @@ torch::Tensor createPhiRotationMatrix(float phi);
 torch::Tensor createThetaRotationMatrix(float theta); */
 
 // needed to convert torch::Tensor to torch::jit::IValue for torchscript
-torch::Device getDevice();
+torch::Device get_device();
+torch::Tensor create_gaussian_kernel(int size, float mean, float std);
 #endif
