@@ -27,4 +27,6 @@ torch::Tensor createThetaRotationMatrix(float theta); */
 // needed to convert torch::Tensor to torch::jit::IValue for torchscript
 torch::Device get_device();
 torch::Tensor create_gaussian_kernel(int size, float mean, float std);
+torch::Tensor raw2attenuation(torch::Tensor raw, torch::Tensor dists);
+void accumulate_rays(torch::Dict<std::string, torch::Tensor> &render_results, torch::Dict<std::string, torch::Tensor> batch_render_results);
 #endif

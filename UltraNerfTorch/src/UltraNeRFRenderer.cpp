@@ -46,7 +46,7 @@ std::pair<torch::Tensor, torch::Tensor> UltraNeRFRenderer::get_rays(const std::o
     return std::pair{rays_o, rays_d};
 }
 
-std::vector<torch::Tensor> UltraNeRFRenderer::batchify_rays(torch::Tensor rays_flat, int N_samples = 1)
+std::vector<torch::Tensor> UltraNeRFRenderer::batchify_rays(torch::Tensor rays_flat, int N_samples)
 {
     std::vector<torch::Tensor> ray_batches = std::vector<torch::Tensor>();
     // Iterate through rays in chunks
@@ -59,7 +59,7 @@ std::vector<torch::Tensor> UltraNeRFRenderer::batchify_rays(torch::Tensor rays_f
     }
     return ray_batches;
 }
-torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::render_ray_batches(std::vector<torch::Tensor> ray_batches, int N_samples = 1)
+torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::render_ray_batches(std::vector<torch::Tensor> ray_batches, int N_samples)
 {
     torch::Dict<std::string, torch::Tensor> render_results = torch::Dict<std::string, torch::Tensor>();
 
@@ -102,20 +102,6 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::render_nerf(
     auto ray_batches = batchify_rays(concat_rays, chunk);
     torch::Dict<std::string, torch::Tensor> render_results = render_ray_batches(ray_batches);
     return render_results;
-}
-
-void accumulate_rays(torch::Dict<std::string, torch::Tensor> &render_results, torch::Dict<std::string, torch::Tensor> batch_render_results)
-{
-    // Accumulate results
-    for (auto it = batch_render_results.begin(); it != batch_render_results.end(); ++it)
-    {
-        if (render_results.find(it->key()) == render_results.end())
-        {
-            // First time seeing this key, create a list to accumulate
-            render_results.insert(it->key(), std::vector<torch::Tensor>());
-        }
-        render_results.find(it->key())->value().add(it->value());
-    }
 }
 
 std::pair<torch::Tensor, torch::Tensor> UltraNeRFRenderer::generate_linear_us_rays(const torch::Tensor &c2w)
@@ -162,8 +148,8 @@ std::pair<torch::Tensor, torch::Tensor> UltraNeRFRenderer::generate_linear_us_ra
 torch::Tensor UltraNeRFRenderer::pass_rays_to_nerf(
     torch::Tensor ray_batch,
     int N_samples,
-    bool retraw = false,
-    bool lindisp = false)
+    bool retraw,
+    bool lindisp)
 {
     // Batch size
     int N_rays = ray_batch.size(0);
@@ -197,7 +183,7 @@ torch::Tensor UltraNeRFRenderer::pass_rays_to_nerf(
     torch::Tensor pts = step + origin;
 
     // Evaluate model at each point
-    torch::Tensor raw = this->model.forward(pts);
+    torch::Tensor raw = this->model.run_network(pts);
 
     return raw;
 }
@@ -307,10 +293,6 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::process_raw_rays(torc
     results.insert("b", b);
     results.insert("r", r);
     results.insert("confidence_maps", confidence_maps);
-}
 
-// Helper function
-auto raw2attenuation(torch::Tensor raw, torch::Tensor dists)
-{
-    return torch::exp(-raw * dists);
-};
+    return results;
+}

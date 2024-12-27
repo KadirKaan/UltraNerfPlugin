@@ -45,3 +45,21 @@ torch::Tensor create_gaussian_kernel(int size, float mean, float std)
 
     return gauss_kernel;
 }
+torch::Tensor raw2attenuation(torch::Tensor raw, torch::Tensor dists)
+{
+    return torch::exp(-raw * dists);
+};
+
+void accumulate_rays(torch::Dict<std::string, torch::Tensor> &render_results, torch::Dict<std::string, torch::Tensor> batch_render_results)
+{
+    // Accumulate results
+    for (auto it = batch_render_results.begin(); it != batch_render_results.end(); ++it)
+    {
+        if (render_results.find(it->key()) == render_results.end())
+        {
+            // First time seeing this key, create a list to accumulate
+            render_results.insert(it->key(), torch::Tensor());
+        }
+        render_results.find(it->key())->value().add(it->value());
+    }
+}

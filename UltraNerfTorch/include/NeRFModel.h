@@ -17,13 +17,12 @@ public:
               std::vector<int> skips = {4},
               int embeddingLevel = 6,
               bool useViewDirs = false);
-    torch::Tensor forward(torch::Tensor &inputs);
+    torch::Tensor forward(const torch::Tensor &inputs);
+    torch::Tensor run_network(const torch::Tensor &inputs);
     void load(std::string path);
     torch::Device get_device();
     bool is_initialized();
     torch::Tensor add_positional_encoding(const torch::Tensor &x) const;
-    std::function<torch::Tensor(torch::Tensor)> get_network_fn() { return network_fn_; }
-    std::function<torch::Tensor(torch::Tensor, std::function<torch::Tensor(torch::Tensor)>)> get_network_query_fn() { return network_query_fn_; }
 
 private:
     // TODO: maybe use nn module
@@ -39,8 +38,6 @@ private:
     std::vector<int> skips_ = {4};
     bool use_view_dirs_ = false;
     torch::nn::ModuleList pts_linears_;
-    torch::nn::Linear output_linear_;
-    std::function<torch::Tensor(torch::Tensor)> network_fn_;
-    std::function<torch::Tensor(torch::Tensor, std::function<torch::Tensor(torch::Tensor)>)> network_query_fn_;
+    torch::nn::Linear output_linear_{nullptr};
 };
 #endif

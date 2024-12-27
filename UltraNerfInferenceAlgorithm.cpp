@@ -39,7 +39,7 @@ namespace ImFusion
 	{
 		// set generic error status until we have finished
 		m_status = static_cast<int>(Status::Error);
-		if (!model.isInitialized())
+		if (!model.is_initialized())
 		{
 			return;
 		}

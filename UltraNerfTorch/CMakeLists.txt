@@ -4,7 +4,7 @@ project(UltraNerfTorch)
 add_compile_options("-fPIC")
 
 # Add a library with the above sources
-add_library(${PROJECT_NAME} src/NeRFModel.cpp src/NeRFRenderer.cpp src/NeRFUtils.cpp)
+add_library(${PROJECT_NAME} src/NeRFModel.cpp src/UltraNeRFRenderer.cpp src/NeRFUtils.cpp)
 
 target_include_directories( ${PROJECT_NAME}
     PUBLIC ${PROJECT_SOURCE_DIR}/include

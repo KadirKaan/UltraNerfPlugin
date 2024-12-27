@@ -46,7 +46,7 @@ namespace ImFusion
 		float xCoordinate = 0;
 		float yCoordinate = 0;
 		float zCoordinate = 0;
-		NeRFModel model = NeRFModel(getDevice());
+		NeRFModel model = NeRFModel(get_device());
 		std::string modelPath = "";
 	};
 }
