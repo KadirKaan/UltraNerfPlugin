@@ -6,16 +6,9 @@
 #include <UltraNerfTorch/include/NeRFUtils.h>
 #include <memory>
 
-struct Point
-{
-	float x;
-	float y;
-	float z;
-};
 namespace ImFusion
 {
 	class SharedImageSet;
-
 	class UltraNerfInferenceAlgorithm : public Algorithm
 	{
 	public:
@@ -49,7 +42,7 @@ namespace ImFusion
 	private:
 		std::unique_ptr<SharedImageSet> m_imgOut; ///< Output image after processing
 		// TODO: derive these
-		std::pair<Point, Point> point_pair;
+		std::pair<Point, Point> point_pair = std::make_pair(Point(0, 0, 0), Point(0, 0, 0));
 		UltraNeRFRenderer renderer;
 		std::string modelPath = "";
 		torch::Tensor generate_rays();

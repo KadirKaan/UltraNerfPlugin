@@ -62,4 +62,4 @@ void accumulate_rays(torch::Dict<std::string, torch::Tensor> &render_results, to
         }
         render_results.find(it->key())->value().add(it->value());
     }
-}
+};
