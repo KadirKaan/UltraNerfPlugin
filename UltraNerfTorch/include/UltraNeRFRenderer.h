@@ -12,7 +12,7 @@
 class UltraNeRFRenderer : public NeRFRenderer
 {
 public:
-    UltraNeRFRenderer(NeRFModel &model, int H, int W, float sw, float sh);
+    UltraNeRFRenderer(NeRFModel model, int H, int W, float sw, float sh);
     UltraNeRFRenderer() : NeRFRenderer() {};
     virtual std::pair<torch::Tensor, torch::Tensor> get_rays(const std::optional<std::vector<torch::Tensor>> &c2w,
                                                              const std::optional<std::pair<torch::Tensor, torch::Tensor>> &rays);

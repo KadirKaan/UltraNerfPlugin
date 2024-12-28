@@ -18,6 +18,7 @@ NeRFModel::NeRFModel(const torch::Device &device,
       output_channels_(output_channels),
       skips_(skips),
       pts_linears_(register_module("pts_linears", torch::nn::ModuleList())),
+      // TODO: get embedder config values from somewhere
       embedder_(Embedder(Embedder::EmbedderConfig{
           .input_dims = 3,
           .include_input = true,
@@ -83,33 +84,26 @@ torch::Tensor NeRFModel::run_network(const torch::Tensor &x)
 }
 void NeRFModel::load_weights(const std::string &path)
 {
-    try
-    {
-        // Load the PyTorch model weights
-        torch::jit::script::Module pytorch_model = torch::jit::load(path);
+    // Load the PyTorch model weights
+    // torch::jit::script::Module pytorch_model = torch::jit::load(path);
 
-        // Load weights for pts_linears
-        for (size_t i = 0; i < pts_linears_->size(); i++)
-        {
-            std::string weight_key = "pts_linears." + std::to_string(i) + ".weight";
-            std::string bias_key = "pts_linears." + std::to_string(i) + ".bias";
+    // // Load weights for pts_linears
+    // for (size_t i = 0; i < pts_linears_->size(); i++)
+    // {
+    //     std::string weight_key = "pts_linears." + std::to_string(i) + ".weight";
+    //     std::string bias_key = "pts_linears." + std::to_string(i) + ".bias";
 
-            auto &layer = *std::dynamic_pointer_cast<torch::nn::Linear>(pts_linears_[i]);
+    //     auto &layer = *std::dynamic_pointer_cast<torch::nn::Linear>(pts_linears_[i]);
 
-            // Load weights and biases
-            layer->weight.copy_(pytorch_model.attr(weight_key).toTensor());
-            layer->bias.copy_(pytorch_model.attr(bias_key).toTensor());
-        }
+    //     // Load weights and biases
+    //     layer->weight.copy_(pytorch_model.attr(weight_key).toTensor());
+    //     layer->bias.copy_(pytorch_model.attr(bias_key).toTensor());
+    // }
 
-        // Load weights for output_linear
-        output_linear_->weight.copy_(pytorch_model.attr("output_linear.weight").toTensor());
-        output_linear_->bias.copy_(pytorch_model.attr("output_linear.bias").toTensor());
-    }
-    catch (const c10::Error &e)
-    {
-        std::cerr << "Error loading weights: " << e.msg() << std::endl;
-        throw;
-    }
+    // // Load weights for output_linear
+    // output_linear_->weight.copy_(pytorch_model.attr("output_linear.weight").toTensor());
+    // output_linear_->bias.copy_(pytorch_model.attr("output_linear.bias").toTensor());
+
     this->initialized_ = true;
 }
 

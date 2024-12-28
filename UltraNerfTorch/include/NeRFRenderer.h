@@ -23,7 +23,7 @@ public:
     virtual torch::Dict<std::string, torch::Tensor> render_nerf(const std::optional<std::pair<torch::Tensor, torch::Tensor>> rays,
                                                                 const std::optional<std::vector<torch::Tensor>> c2w);
     virtual NeRFModel get_model() { return model_; };
-    NeRFRenderer(NeRFModel &model, int H, int W, float sw, float sh) : model_(model), H(H), W(W), sw(sw), sh(sh) {};
+    NeRFRenderer(NeRFModel model, int H, int W, float sw, float sh) : model_(model), H(H), W(W), sw(sw), sh(sh) {};
     NeRFRenderer();
 
 protected:

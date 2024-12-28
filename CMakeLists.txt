@@ -1,7 +1,7 @@
 # Define a new CMake project for the demo plugin
+cmake_minimum_required(VERSION 3.5.0)
 project(UltraNerfPlugin)
-cmake_minimum_required(VERSION 3.2.0)
-
+add_compile_options("-fPIC")
 add_compile_options("-fno-sized-deallocation")
 
 # Locate the ImFusion SDK.
@@ -13,7 +13,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-include_directories($${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/src)
 # Define and configure the CMake target
 set(Sources
@@ -41,7 +41,6 @@ set(UiSources
 list(APPEND CMAKE_PREFIX_PATH "UltraNerfTorch/libtorch")
 find_package(Torch REQUIRED)
 include_directories(SYSTEM ${TORCH_INCLUDE_DIRS})
-
 # Define target library
 add_library(UltraNerfPlugin SHARED ${Sources} ${UiHeaders} ${Headers})
 target_include_directories(UltraNerfPlugin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

@@ -30,7 +30,8 @@ namespace ImFusion
 
 	void UltraNerfInferenceController::onCompute()
 	{
-		m_alg->setCoordinates(m_ui->xCoordinate->value(), m_ui->yCoordinate->value(), m_ui->zCoordinate->value());
+		m_alg->setPoints(Point(m_ui->xCoorTop->text().toFloat(), m_ui->yCoorTop->text().toFloat(), m_ui->zCoorTop->text().toFloat()),
+						 Point(m_ui->xCoorBot->text().toFloat(), m_ui->yCoorBot->text().toFloat(), m_ui->zCoorBot->text().toFloat()));
 		// Call compute on the algorithm
 		m_alg->compute();
 		m_main->dataModel()->add(m_alg->takeOutput());

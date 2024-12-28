@@ -3,7 +3,7 @@
 
 using namespace torch::indexing;
 
-UltraNeRFRenderer::UltraNeRFRenderer(NeRFModel &model, int H, int W, float sw, float sh) : NeRFRenderer(model, H, W, sw, sh)
+UltraNeRFRenderer::UltraNeRFRenderer(NeRFModel model, int H, int W, float sw, float sh) : NeRFRenderer(model, H, W, sw, sh)
 {
     this->gaussian_kernel = create_gaussian_kernel(3, 0.0, 1.0);
 };
@@ -295,4 +295,8 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::process_raw_rays(torc
     results.insert("confidence_maps", confidence_maps);
 
     return results;
+}
+torch::Tensor UltraNeRFRenderer::get_output_data(torch::Dict<std::string, torch::Tensor> output_dict)
+{
+    return output_dict.at("intensity_map");
 }

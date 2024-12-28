@@ -26,68 +26,91 @@
             <property name="bottomMargin">
                 <number>9</number>
             </property>
-            <item row="1" column="1">
-                <widget class="QSpinBox" name="xCoordinate">
-                    <property name="minimum">
-                        <number>2</number>
-                    </property>
-                    <property name="maximum">
-                        <number>4</number>
-                    </property>
-                    <property name="singleStep">
-                        <number>2</number>
-                    </property>
-                </widget>
-            </item>
             <item row="1" column="0">
-                <widget class="QLabel" name="labelX">
+                <widget class="QLabel" name="labelTop">
                     <property name="text">
-                        <string>X Coordinate(In some units)</string>
-                    </property>
-                </widget>
-            </item>
-            <item row="2" column="1">
-                <widget class="QSpinBox" name="yCoordinate">
-                    <property name="minimum">
-                        <number>2</number>
-                    </property>
-                    <property name="maximum">
-                        <number>4</number>
-                    </property>
-                    <property name="singleStep">
-                        <number>2</number>
+                        <string>Upper Point</string>
                     </property>
                 </widget>
             </item>
             <item row="2" column="0">
-                <widget class="QLabel" name="labelY">
+                <widget class="QLabel" name="labelBot">
                     <property name="text">
-                        <string>Y Coordinate(In some units)</string>
+                        <string>Lower Point</string>
                     </property>
                 </widget>
             </item>
-            <item row="3" column="1">
-                <widget class="QSpinBox" name="zCoordinate">
-                    <property name="minimum">
-                        <number>2</number>
-                    </property>
-                    <property name="maximum">
-                        <number>4</number>
-                    </property>
-                    <property name="singleStep">
-                        <number>2</number>
+            <item row="1" column="1">
+                <widget class="QLabel" name="labelXTop">
+                    <property name="text">
+                        <string>x:</string>
                     </property>
                 </widget>
             </item>
-            <item row="3" column="0">
-                <widget class="QLabel" name="labelZ">
+            <item row="1" column="3">
+                <widget class="QLabel" name="labelYTop">
                     <property name="text">
-                        <string>Z Coordinate(In some units)</string>
+                        <string>y:</string>
+                    </property>
+                </widget>
+            </item>
+            <item row="1" column="5">
+                <widget class="QLabel" name="labelZTop">
+                    <property name="text">
+                        <string>z:</string>
                     </property>
                 </widget>
             </item>
 
-            <item row="4" column="0">
+            <item row="2" column="1">
+                <widget class="QLabel" name="labelXBot">
+                    <property name="text">
+                        <string>x:</string>
+                    </property>
+                </widget>
+            </item>
+            <item row="2" column="3">
+                <widget class="QLabel" name="labelYBot">
+                    <property name="text">
+                        <string>y:</string>
+                    </property>
+                </widget>
+            </item>
+            <item row="2" column="5">
+                <widget class="QLabel" name="labelZBot">
+                    <property name="text">
+                        <string>z:</string>
+                    </property>
+                </widget>
+            </item>
+
+            <item row="1" column="2">
+                <widget class="QLineEdit" name="xCoorTop">
+                </widget>
+            </item>
+            <item row="1" column="4">
+                <widget class="QLineEdit" name="yCoorTop">
+                </widget>
+            </item>
+            <item row="1" column="6">
+                <widget class="QLineEdit" name="zCoorTop">
+                </widget>
+            </item>
+
+            <item row="2" column="2">
+                <widget class="QLineEdit" name="xCoorBot">
+                </widget>
+            </item>
+            <item row="2" column="4">
+                <widget class="QLineEdit" name="yCoorBot">
+                </widget>
+            </item>
+            <item row="2" column="6">
+                <widget class="QLineEdit" name="zCoorBot">
+                </widget>
+            </item>
+
+            <item row="3" column="0" colspan="3">
                 <widget class="QLabel" name="label">
                     <property name="text">
                         <string>Model Path</string>
@@ -95,12 +118,12 @@
                 </widget>
             </item>
 
-            <item row="4" column="1">
+            <item row="3" column="3" colspan="4">
                 <widget class="QLineEdit" name="modelPath">
                 </widget>
             </item>
 
-            <item row="5" column="0" colspan="2">
+            <item row="4" column="0" colspan="3">
                 <widget class="QPushButton" name="pushButtonLoadModel">
                     <property name="text">
                         <string>Load Model</string>
@@ -108,14 +131,14 @@
                 </widget>
             </item>
 
-            <item row="6" column="0" colspan="2">
+            <item row="4" column="0" colspan="4">
                 <widget class="QPushButton" name="pushButtonRunModel">
                     <property name="text">
                         <string>Create View</string>
                     </property>
                 </widget>
             </item>
-            <item row="0" column="0" colspan="2">
+            <item row="0" column="0" colspan="7">
                 <widget class="QLabel" name="label_2">
                     <property name="text">
                         <string>This algorithm creates views on a pretrained UltraNeRF model</string>

@@ -15,11 +15,8 @@
 
 namespace ImFusion
 {
-	UltraNerfInferenceAlgorithm::UltraNerfInferenceAlgorithm()
+	UltraNerfInferenceAlgorithm::UltraNerfInferenceAlgorithm() : renderer(UltraNeRFRenderer(NeRFModel(get_device()), 512, 512, 1.0, 1.0))
 	{
-		NeRFModel model = NeRFModel(get_device());
-		// todo: set h, w, sw, sh
-		this->renderer = UltraNeRFRenderer(model, 512, 512, 1.0, 1.0);
 	}
 
 	UltraNerfInferenceAlgorithm::~UltraNerfInferenceAlgorithm()
@@ -42,7 +39,7 @@ namespace ImFusion
 	{
 		// set generic error status until we have finished
 		m_status = static_cast<int>(Status::Error);
-		if (!model.is_initialized())
+		if (!renderer.get_model().is_initialized())
 		{
 			return;
 		}
@@ -71,9 +68,12 @@ namespace ImFusion
 		if (p == nullptr)
 			return;
 
-		p->param("xCoordinate", xCoordinate);
-		p->param("yCoordinate", yCoordinate);
-		p->param("zCoordinate", zCoordinate);
+		p->param("xCoorTop", this->point_pair.first.x);
+		p->param("yCoorTop", this->point_pair.first.y);
+		p->param("zCoorTop", this->point_pair.first.z);
+		p->param("xCoorBot", this->point_pair.second.x);
+		p->param("yCoorBot", this->point_pair.second.y);
+		p->param("zCoorBot", this->point_pair.second.z);
 		p->param("modelPath", modelPath);
 
 		signalParametersChanged.emitSignal();
@@ -84,10 +84,6 @@ namespace ImFusion
 		// this method is necessary to store our settings in a workspace file
 		if (p == nullptr)
 			return;
-
-		p->setParam("xCoordinate", xCoordinate, 0.f);
-		p->setParam("yCoordinate", yCoordinate, 0.f);
-		p->setParam("zCoordinate", zCoordinate, 0.f);
 		p->setParam("modelPath", modelPath, "");
 	}
 }

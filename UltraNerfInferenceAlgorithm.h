@@ -5,6 +5,13 @@
 #include <UltraNerfTorch/include/UltraNeRFRenderer.h>
 #include <UltraNerfTorch/include/NeRFUtils.h>
 #include <memory>
+
+struct Point
+{
+	float x;
+	float y;
+	float z;
+};
 namespace ImFusion
 {
 	class SharedImageSet;
@@ -16,12 +23,11 @@ namespace ImFusion
 		~UltraNerfInferenceAlgorithm();
 
 		void setModelPath(std::string modelPath) { this->modelPath = modelPath; }
-		void setCoordinates(float x, float y, float z)
+		void setPoints(Point point_top, Point point_bottom)
 		{
-			this->xCoordinate = x;
-			this->yCoordinate = y;
-			this->zCoordinate = z;
-		}
+			this->point_pair.first = point_top;
+			this->point_pair.second = point_bottom;
+		};
 
 		// \name	Methods implementing the algorithm interface
 		//\{
@@ -43,10 +49,9 @@ namespace ImFusion
 	private:
 		std::unique_ptr<SharedImageSet> m_imgOut; ///< Output image after processing
 		// TODO: derive these
-		float xCoordinate = 0;
-		float yCoordinate = 0;
-		float zCoordinate = 0;
+		std::pair<Point, Point> point_pair;
 		UltraNeRFRenderer renderer;
 		std::string modelPath = "";
+		torch::Tensor generate_rays();
 	};
-}
+};
