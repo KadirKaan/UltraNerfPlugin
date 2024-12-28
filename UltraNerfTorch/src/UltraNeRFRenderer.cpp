@@ -183,7 +183,7 @@ torch::Tensor UltraNeRFRenderer::pass_rays_to_nerf(
     torch::Tensor pts = step + origin;
 
     // Evaluate model at each point
-    torch::Tensor raw = this->model.run_network(pts);
+    torch::Tensor raw = this->model_.run_network(pts);
 
     return raw;
 }

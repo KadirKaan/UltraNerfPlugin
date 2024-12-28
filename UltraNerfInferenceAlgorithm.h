@@ -2,7 +2,7 @@
 #pragma once
 
 #include <ImFusion/Base/Algorithm.h>
-#include <UltraNerfTorch/include/NeRFModel.h>
+#include <UltraNerfTorch/include/UltraNeRFRenderer.h>
 #include <UltraNerfTorch/include/NeRFUtils.h>
 #include <memory>
 namespace ImFusion
@@ -46,7 +46,7 @@ namespace ImFusion
 		float xCoordinate = 0;
 		float yCoordinate = 0;
 		float zCoordinate = 0;
-		NeRFModel model = NeRFModel(get_device());
+		UltraNeRFRenderer renderer;
 		std::string modelPath = "";
 	};
 }

@@ -22,10 +22,12 @@ public:
     virtual torch::Tensor get_output_data(torch::Dict<std::string, torch::Tensor> output_dict);
     virtual torch::Dict<std::string, torch::Tensor> render_nerf(const std::optional<std::pair<torch::Tensor, torch::Tensor>> rays,
                                                                 const std::optional<std::vector<torch::Tensor>> c2w);
-    NeRFRenderer(NeRFModel &model, int H, int W, float sw, float sh) : model(model), H(H), W(W), sw(sw), sh(sh) {};
+    virtual NeRFModel get_model() { return model_; };
+    NeRFRenderer(NeRFModel &model, int H, int W, float sw, float sh) : model_(model), H(H), W(W), sw(sw), sh(sh) {};
+    NeRFRenderer();
 
 protected:
-    NeRFModel &model;
+    NeRFModel model_;
     int H;
     int W;
     int chunk = 1024 * 32;

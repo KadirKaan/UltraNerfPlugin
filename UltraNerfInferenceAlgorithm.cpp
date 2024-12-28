@@ -17,6 +17,9 @@ namespace ImFusion
 {
 	UltraNerfInferenceAlgorithm::UltraNerfInferenceAlgorithm()
 	{
+		NeRFModel model = NeRFModel(get_device());
+		// todo: set h, w, sw, sh
+		this->renderer = UltraNeRFRenderer(model, 512, 512, 1.0, 1.0);
 	}
 
 	UltraNerfInferenceAlgorithm::~UltraNerfInferenceAlgorithm()
@@ -54,7 +57,7 @@ namespace ImFusion
 	void UltraNerfInferenceAlgorithm::loadModel()
 	{
 		std::string modelPath = this->modelPath;
-		this->model.load(modelPath);
+		this->renderer.get_model().load_weights(modelPath);
 	}
 	OwningDataList UltraNerfInferenceAlgorithm::takeOutput()
 	{
