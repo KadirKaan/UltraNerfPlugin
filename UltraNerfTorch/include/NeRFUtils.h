@@ -37,5 +37,5 @@ torch::Tensor raw2attenuation(torch::Tensor raw, torch::Tensor dists);
 torch::Tensor sin_fn(const torch::Tensor &x);
 torch::Tensor cos_fn(const torch::Tensor &x);
 void accumulate_rays(torch::Dict<std::string, torch::Tensor> &render_results, torch::Dict<std::string, torch::Tensor> batch_render_results);
-torch::Tensor generate_random_rays();
+torch::Tensor generate_random_rays(Point upper_point, Point lower_point, int num_rays);
 #endif

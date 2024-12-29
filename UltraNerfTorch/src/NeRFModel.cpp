@@ -4,7 +4,6 @@
 
 NeRFModel::NeRFModel(const torch::Device &device,
                      int D, int W,
-                     int input_channels,
                      int input_ch_views,
                      int output_channels,
                      std::vector<int> skips,
@@ -13,7 +12,6 @@ NeRFModel::NeRFModel(const torch::Device &device,
     : device_(device),
       embedding_level_(embedding_level),
       D_(D), W_(W),
-      input_channels_(input_channels),
       input_ch_views_(input_ch_views),
       output_channels_(output_channels),
       skips_(skips),
@@ -22,8 +20,8 @@ NeRFModel::NeRFModel(const torch::Device &device,
       embedder_(Embedder(Embedder::EmbedderConfig{
           .input_dims = 3,
           .include_input = true,
-          .max_freq_log2 = 10,
-          .num_freqs = 4,
+          .max_freq_log2 = embedding_level_ - 1,
+          .num_freqs = embedding_level_,
           .log_sampling = true,
           .periodic_fns = {sin_fn, cos_fn},
       })),
@@ -31,6 +29,7 @@ NeRFModel::NeRFModel(const torch::Device &device,
 {
     // Initialize pts_linears ModuleList
     // First layer: input_ch -> W
+    input_channels_ = embedder_.get_out_dim();
     pts_linears_->push_back(register_module("pts_linear_0",
                                             torch::nn::Linear(torch::nn::LinearOptions(input_channels_, W_))));
 
@@ -64,23 +63,36 @@ NeRFModel::NeRFModel(const torch::Device &device,
 torch::Tensor NeRFModel::forward(const torch::Tensor &x)
 {
     auto h = x;
-    for (size_t i = 0; i < pts_linears_->size(); i++)
+    int index = 0;
+    for (const auto &layer : pts_linears_->children())
     {
-        auto &layer = *std::dynamic_pointer_cast<torch::nn::Linear>(pts_linears_[i]);
-        h = layer(h);
+        // Use layer here
+        if (auto *linear = layer.get()->as<torch::nn::Linear>())
+        {
+            h = linear->forward(h);
+        }
         h = torch::relu(h);
-
-        if (std::find(skips_.begin(), skips_.end(), i) != skips_.end())
+        if (std::find(skips_.begin(), skips_.end(), index) != skips_.end())
         {
             h = torch::cat({x, h}, -1);
         }
+        index++;
     }
     return output_linear_(h);
 }
 
 torch::Tensor NeRFModel::run_network(const torch::Tensor &x)
 {
-    return forward(add_positional_encoding(x));
+    auto input_sizes = x.sizes().vec();
+    int64_t last_dim = input_sizes.back();
+    input_sizes.pop_back();
+    // Flatten inputs
+    auto inputs_flat = x.reshape({-1, last_dim});
+    torch::Tensor encoded_inputs = add_positional_encoding(inputs_flat);
+    input_sizes.push_back(output_channels_);
+    torch::Tensor outputs = forward(encoded_inputs).reshape(input_sizes);
+    std::cout << "output shape: " << outputs.sizes() << std::endl;
+    return outputs;
 }
 void NeRFModel::load_weights(const std::string &path)
 {

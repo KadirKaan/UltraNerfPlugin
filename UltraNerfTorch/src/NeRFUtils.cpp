@@ -71,3 +71,33 @@ torch::Tensor cos_fn(const torch::Tensor &x)
 {
     return torch::cos(x);
 };
+
+/**
+ * @brief Generate a batch of random rays between two points.
+ *
+ * The rays are directed towards the x-axis and originate from the upper_point.
+ * The y-coordinate of the ray origin is uniformly distributed between the
+ * y-coordinate of the upper_point and the y-coordinate of the lower_point.
+ *
+ * @param upper_point the point with the upper y-coordinate
+ * @param lower_point the point with the lower y-coordinate
+ * @param num_rays the number of rays to generate
+ * @return a tensor of shape (num_rays, 6) containing the rays
+ */
+torch::Tensor generate_random_rays(Point upper_point, Point lower_point, int num_rays)
+{
+    torch::Tensor rays = torch::empty({num_rays, 6}, torch::TensorOptions().dtype(torch::kFloat32));
+    // test rays are directed towards x axis
+    assert(upper_point.z == lower_point.z);
+    float increment = (lower_point.y - upper_point.y) / num_rays;
+    float y = upper_point.y;
+    for (int i = 0; i < num_rays; i++)
+    {
+        torch::Tensor ray_o = torch::tensor({upper_point.x, y, upper_point.z}, torch::TensorOptions().dtype(torch::kFloat32));
+        torch::Tensor ray_d = torch::tensor({lower_point.x, y, upper_point.z}, torch::TensorOptions().dtype(torch::kFloat32));
+        torch::Tensor ray = torch::cat({ray_o, ray_d}, /*dim=*/0);
+        rays.index_put_({i}, ray);
+        y += increment;
+    }
+    return rays;
+}

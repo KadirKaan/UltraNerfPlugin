@@ -17,7 +17,7 @@ public:
     {
         int input_dims;
         bool include_input;
-        double max_freq_log2;
+        int max_freq_log2;
         int num_freqs;
         bool log_sampling;
         std::vector<std::function<torch::Tensor(const torch::Tensor &)>> periodic_fns;
@@ -39,11 +39,10 @@ class NeRFModel : public torch::nn::Module
 public:
     NeRFModel(const torch::Device &device,
               int D = 8, int W = 256,
-              int input = 3,
               int inputChViews = 3,
               int outputChannels = 4,
               std::vector<int> skips = {4},
-              int embeddingLevel = 6,
+              int embeddingLevel = 10,
               bool useViewDirs = false);
     torch::Tensor forward(const torch::Tensor &inputs);
     torch::Tensor run_network(const torch::Tensor &inputs);
