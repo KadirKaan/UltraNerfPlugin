@@ -63,3 +63,11 @@ void accumulate_rays(torch::Dict<std::string, torch::Tensor> &render_results, to
         render_results.find(it->key())->value().add(it->value());
     }
 };
+torch::Tensor sin_fn(const torch::Tensor &x)
+{
+    return torch::sin(x);
+};
+torch::Tensor cos_fn(const torch::Tensor &x)
+{
+    return torch::cos(x);
+};

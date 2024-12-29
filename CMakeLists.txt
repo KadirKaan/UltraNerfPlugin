@@ -4,8 +4,12 @@ project(UltraNerfPlugin)
 add_compile_options("-fPIC")
 add_compile_options("-fno-sized-deallocation")
 
+#Locate torch
+find_package(Torch REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+
 # Locate the ImFusion SDK.
-find_package(ImFusionLib REQUIRED COMPONENTS ImFusionUS)
+find_package(ImFusionLib REQUIRED)
 
 add_subdirectory(UltraNerfTorch)
 # Enable automatic MOC, RCC and UIC preprocessing for Qt
@@ -38,20 +42,17 @@ set(UiSources
 )
 
 # define torch library files ------------------------------------------------
-list(APPEND CMAKE_PREFIX_PATH "UltraNerfTorch/libtorch")
-find_package(Torch REQUIRED)
-include_directories(SYSTEM ${TORCH_INCLUDE_DIRS})
 # Define target library
 add_library(UltraNerfPlugin SHARED ${Sources} ${UiHeaders} ${Headers})
 target_include_directories(UltraNerfPlugin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
 # Link against the ImFusionLib and selected modules/plugins
-target_link_libraries(UltraNerfPlugin PRIVATE
-  ImFusionLib
-  ImFusionUS
-  UltraNerfTorch
+target_link_libraries(UltraNerfPlugin PUBLIC
   ${TORCH_LIBRARIES}
+  UltraNerfTorch
+  ImFusionLib
 )
-target_compile_features(UltraNerfPlugin PUBLIC cxx_std_20)
+set_property(TARGET UltraNerfPlugin PROPERTY CXX_STANDARD 17)
 # Define output target directories and provide instructions on how to launch
 # the ImFusion Suite with the built custom plugin.
 # These functions are provided by the ImFusionLib target config. 

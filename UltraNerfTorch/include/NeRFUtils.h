@@ -2,7 +2,6 @@
 #define NERF_UTILS_H
 
 #include <filesystem>
-#include "NeRFRenderer.h"
 #undef slots
 #include <torch/torch.h>
 #include <torch/script.h>
@@ -38,4 +37,5 @@ torch::Tensor raw2attenuation(torch::Tensor raw, torch::Tensor dists);
 torch::Tensor sin_fn(const torch::Tensor &x);
 torch::Tensor cos_fn(const torch::Tensor &x);
 void accumulate_rays(torch::Dict<std::string, torch::Tensor> &render_results, torch::Dict<std::string, torch::Tensor> batch_render_results);
+torch::Tensor generate_random_rays();
 #endif

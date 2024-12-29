@@ -6,12 +6,15 @@ add_compile_options("-fPIC")
 add_compile_options("-fno-sized-deallocation")
 
 # Add a library with the above sources
-add_library(${PROJECT_NAME} src/NeRFModel.cpp src/UltraNeRFRenderer.cpp src/NeRFUtils.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp src/NeRFModel.cpp src/UltraNeRFRenderer.cpp src/NeRFUtils.cpp)
+find_package(Torch REQUIRED)
+include_directories(SYSTEM ${TORCH_INCLUDE_DIRS})
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
 target_include_directories( ${PROJECT_NAME}
     PUBLIC ${PROJECT_SOURCE_DIR}/include
 )
-find_package(Torch REQUIRED)
-list(APPEND CMAKE_PREFIX_PATH "/libtorch")
-include_directories(SYSTEM ${TORCH_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES} ${OpenCV_LIBS})
+
+target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES})
