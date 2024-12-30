@@ -10,8 +10,9 @@ int main()
     torch::Tensor rays = generate_random_rays({0.0, 0.0, 0.0}, {1.0, 1.0, 0.0}, 512);
     std::pair<torch::Tensor, torch::Tensor> ray_o_d_pairs = std::make_pair(rays.index({torch::indexing::Slice(), torch::indexing::Slice(0, 3)}),
                                                                            rays.index({torch::indexing::Slice(), torch::indexing::Slice(3, 6)}));
-    renderer.render_nerf(std::optional<std::pair<torch::Tensor, torch::Tensor>>(ray_o_d_pairs), std::nullopt);
-    torch::Tensor output = renderer.get_output_data(torch::Dict<std::string, torch::Tensor>());
+    torch::Dict<std::string, torch::Tensor> render_results = renderer.render_nerf(std::optional<std::pair<torch::Tensor, torch::Tensor>>(ray_o_d_pairs), std::nullopt);
+    std::cout << "Got render results" << std::endl;
+    torch::Tensor output = renderer.get_output_data(render_results);
     std::cout << output << std::endl;
     return 0;
 }

@@ -40,9 +40,9 @@ public:
     NeRFModel(const torch::Device &device,
               int D = 8, int W = 256,
               int inputChViews = 3,
-              int outputChannels = 4,
+              int outputChannels = 5,
               std::vector<int> skips = {4},
-              int embeddingLevel = 10,
+              int embeddingLevel = 6,
               bool useViewDirs = false);
     torch::Tensor forward(const torch::Tensor &inputs);
     torch::Tensor run_network(const torch::Tensor &inputs);
@@ -54,12 +54,12 @@ public:
 private:
     const torch::Device &device_;
     bool initialized_ = false;
-    int embedding_level_ = 6;
-    int D_ = 8;
-    int W_ = 256;
-    int input_channels_ = 3;
-    int input_ch_views_ = 3;
-    int output_channels_ = 4;
+    int embedding_level_;
+    int D_;
+    int W_;
+    int input_channels_;
+    int input_ch_views_;
+    int output_channels_;
     std::vector<int> skips_ = {4};
     bool use_view_dirs_ = false;
     torch::nn::ModuleList pts_linears_;

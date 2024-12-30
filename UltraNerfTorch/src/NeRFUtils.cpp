@@ -52,14 +52,17 @@ torch::Tensor raw2attenuation(torch::Tensor raw, torch::Tensor dists)
 
 void accumulate_rays(torch::Dict<std::string, torch::Tensor> &render_results, torch::Dict<std::string, torch::Tensor> batch_render_results)
 {
+    std::cout << "Accumulating rays" << std::endl;
     // Accumulate results
     for (auto it = batch_render_results.begin(); it != batch_render_results.end(); ++it)
     {
         if (render_results.find(it->key()) == render_results.end())
         {
+            std::cout << "Found new key: " << it->key() << std::endl;
             // First time seeing this key, create a list to accumulate
-            render_results.insert(it->key(), torch::Tensor());
+            render_results.insert(it->key(), torch::empty_like(it->value()));
         }
+        std::cout << "Accumulating key: " << it->key() << std::endl;
         render_results.find(it->key())->value().add(it->value());
     }
 };

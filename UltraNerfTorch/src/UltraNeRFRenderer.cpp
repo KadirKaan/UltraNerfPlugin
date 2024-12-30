@@ -68,6 +68,7 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::render_ray_batches(st
     {
         auto raw_ray_chunks = pass_rays_to_nerf(rays_chunk);
         auto rendered_ray_chunks = process_raw_rays(raw_ray_chunks);
+        std::cout << "Processed rays" << std::endl;
         accumulate_rays(render_results, rendered_ray_chunks);
     }
 
@@ -211,13 +212,11 @@ torch::Tensor cumprod_exclusive(torch::Tensor tensor)
 
 torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::process_raw_rays(torch::Tensor raw)
 {
-    std::cout << "Processing raw rays" << std::endl;
     this->gaussian_kernel = gaussian_kernel;
 
     // Preprocessing raw tensor
     raw = raw.unsqueeze(0).unsqueeze(1);
     raw = raw.permute({0, 1, 3, 2, 4});
-
     auto batch_size = raw.size(0);
     auto C = raw.size(1);
     auto W = raw.size(2);
@@ -228,15 +227,15 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::process_raw_rays(torc
     torch::Tensor t_vals = torch::linspace(0.0, 1.0, H);
     torch::Tensor z_vals = t_vals.expand({batch_size, W, -1});
 
-    std::cout << "Calculating distances" << std::endl;
     // Calculate distances
     torch::Tensor dists = torch::abs(
         z_vals.index({torch::indexing::Ellipsis, torch::indexing::Slice(None, -1), torch::indexing::Slice(None, 1)}) -
         z_vals.index({torch::indexing::Ellipsis, torch::indexing::Slice(1, None), torch::indexing::Slice(None, 1)}));
     dists = torch::squeeze(dists);
-    dists = torch::cat({dists, dists.index({torch::indexing::Slice(), torch::indexing::Slice(-1, None)})}, -1);
 
-    std::cout << "Attenuation" << std::endl;
+    auto last_col = dists.index({"...", -1}).unsqueeze(-1);
+    dists = torch::cat({dists, last_col}, -1);
+
     // Attenuation
     torch::Tensor attenuation_coeff = torch::abs(raw.index({torch::indexing::Ellipsis, 0}));
     torch::Tensor attenuation = raw2attenuation(attenuation_coeff, dists);
@@ -244,7 +243,6 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::process_raw_rays(torc
     torch::Tensor attenuation_total = cumprod_exclusive(attenuation);
     attenuation_total = attenuation_total.permute({0, 1, 3, 2});
 
-    std::cout << "Reflection" << std::endl;
     // Reflection
     torch::Tensor prob_border = torch::sigmoid(raw.index({torch::indexing::Ellipsis, 2}));
 
@@ -258,10 +256,8 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::process_raw_rays(torc
     torch::Tensor reflection_total = cumprod_exclusive(reflection_transmission);
     reflection_total = reflection_total.permute({0, 1, 3, 2});
 
-    std::cout << "Backscattering" << std::endl;
     // Backscattering
     torch::Tensor density_coeff = torch::sigmoid(raw.index({torch::indexing::Ellipsis, 3}));
-
     // Probabilistic sampling (approximation)
     torch::Tensor scatterers_density = torch::bernoulli(density_coeff);
 
@@ -270,11 +266,13 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::process_raw_rays(torc
 
     // Convolution (assuming g_kernel is available)
     torch::Tensor psf_scatter = torch::nn::functional::conv2d(
-                                    scatterers_map.unsqueeze(0).unsqueeze(0),
+                                    scatterers_map,
                                     gaussian_kernel.unsqueeze(0).unsqueeze(0),
-                                    torch::nn::functional::Conv2dFuncOptions().stride(1).padding(1))
+                                    torch::nn::functional::Conv2dFuncOptions()
+                                        .stride(1)
+                                        .padding(gaussian_kernel.size(0) / 2))
                                     .squeeze();
-
+    std::cout << psf_scatter.sizes() << std::endl;
     // Compute confidence maps and final intensity
     torch::Tensor confidence_maps = attenuation_total * reflection_total;
     torch::Tensor b = confidence_maps * psf_scatter;
@@ -297,7 +295,7 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::process_raw_rays(torc
     results.insert("b", b);
     results.insert("r", r);
     results.insert("confidence_maps", confidence_maps);
-
+    std::cout << "Done" << std::endl;
     return results;
 }
 torch::Tensor UltraNeRFRenderer::get_output_data(torch::Dict<std::string, torch::Tensor> output_dict)
