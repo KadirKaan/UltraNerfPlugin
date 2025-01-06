@@ -10,6 +10,8 @@ add_executable(${PROJECT_NAME} src/main.cpp src/NeRFModel.cpp src/UltraNeRFRende
 find_package(Torch REQUIRED)
 include_directories(SYSTEM ${TORCH_INCLUDE_DIRS})
 
+find_package(OpenCV REQUIRED)
+include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
@@ -17,4 +19,4 @@ target_include_directories( ${PROJECT_NAME}
     PUBLIC ${PROJECT_SOURCE_DIR}/include
 )
 
-target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES} ${OpenCV_LIBS} )

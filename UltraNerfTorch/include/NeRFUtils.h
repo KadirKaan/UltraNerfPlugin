@@ -2,6 +2,7 @@
 #define NERF_UTILS_H
 
 #include <filesystem>
+#include <opencv2/opencv.hpp>
 #undef slots
 #include <torch/torch.h>
 #include <torch/script.h>
@@ -38,4 +39,5 @@ torch::Tensor sin_fn(const torch::Tensor &x);
 torch::Tensor cos_fn(const torch::Tensor &x);
 void accumulate_rays(torch::Dict<std::string, torch::Tensor> &render_results, torch::Dict<std::string, torch::Tensor> batch_render_results);
 torch::Tensor generate_random_rays(Point upper_point, Point lower_point, int num_rays);
+cv::Mat tensor_to_grayscale_opencv(const torch::Tensor &tensor);
 #endif

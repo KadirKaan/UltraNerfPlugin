@@ -8,7 +8,7 @@ UltraNeRFRenderer::UltraNeRFRenderer(NeRFModel model, int H, int W, float sw, fl
 {
     this->gaussian_kernel = create_gaussian_kernel(3, 0.0, 1.0);
 };
-std::pair<torch::Tensor, torch::Tensor> UltraNeRFRenderer::get_rays(const std::optional<std::vector<torch::Tensor>> &c2w,
+std::pair<torch::Tensor, torch::Tensor> UltraNeRFRenderer::get_rays(const std::optional<torch::Tensor> &c2w,
                                                                     const std::optional<std::pair<torch::Tensor, torch::Tensor>> &input_rays)
 {
 
@@ -21,21 +21,10 @@ std::pair<torch::Tensor, torch::Tensor> UltraNeRFRenderer::get_rays(const std::o
     if (c2w.has_value())
     {
         // Special case to render full image
-        for (const auto &c : c2w.value())
-        {
-            auto [o, d] = generate_linear_us_rays(c);
-
-            if (!rays_o.defined())
-            {
-                rays_o = o;
-                rays_d = d;
-            }
-            else
-            {
-                rays_o = torch::cat({rays_o, o}, 0);
-                rays_d = torch::cat({rays_d, d}, 0);
-            }
-        }
+        auto c = c2w.value();
+        auto [o, d] = generate_linear_us_rays(c);
+        rays_o = o;
+        rays_d = d;
     }
     else
     {
@@ -68,21 +57,24 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::render_ray_batches(st
     {
         auto raw_ray_chunks = pass_rays_to_nerf(rays_chunk);
         auto rendered_ray_chunks = process_raw_rays(raw_ray_chunks);
-        std::cout << "Processed rays" << std::endl;
-        accumulate_rays(render_results, rendered_ray_chunks);
+        std::cout << rendered_ray_chunks.at("intensity_map")[0][0][-1][-1] << std::endl;
+        render_results = rendered_ray_chunks;
+        // TODO: add batch rendering
+        // accumulate_rays(render_results, rendered_ray_chunks);
     }
-
-    // Concatenate results for each key
-    torch::Dict<std::string, torch::Tensor> flat_render_results = torch::Dict<std::string, torch::Tensor>();
-    for (auto it = render_results.begin(); it != render_results.end(); ++it)
-    {
-        flat_render_results.insert(it->key(), torch::cat(it->value(), 0));
-    }
-    return flat_render_results;
+    std::cout << render_results.at("intensity_map")[0][0][-1][-1] << std::endl;
+    return render_results;
+    // // Concatenate results for each key
+    // torch::Dict<std::string, torch::Tensor> flat_render_results = torch::Dict<std::string, torch::Tensor>();
+    // for (auto it = render_results.begin(); it != render_results.end(); ++it)
+    // {
+    //     flat_render_results.insert(it->key(), torch::cat(it->value(), 0));
+    // }
+    // return flat_render_results;
 }
 torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::render_nerf(
     std::optional<std::pair<torch::Tensor, torch::Tensor>> input_rays = std::nullopt,
-    std::optional<std::vector<torch::Tensor>> c2w = std::nullopt)
+    std::optional<torch::Tensor> c2w = std::nullopt)
 {
 
     std::pair<torch::Tensor, torch::Tensor> rays = get_rays(c2w, input_rays);
@@ -184,7 +176,6 @@ torch::Tensor UltraNeRFRenderer::pass_rays_to_nerf(
 
     // Evaluate model at each point
     torch::Tensor raw = model_ptr_->run_network(pts);
-
     return raw;
 }
 
@@ -207,8 +198,6 @@ torch::Tensor cumprod_exclusive(torch::Tensor tensor)
 
     return cumprod;
 }
-// Global convolution kernel
-// Generates a 2D Gaussian kernel
 
 torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::process_raw_rays(torch::Tensor raw)
 {
@@ -272,17 +261,13 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::process_raw_rays(torc
                                         .stride(1)
                                         .padding(gaussian_kernel.size(0) / 2))
                                     .squeeze();
-    std::cout << psf_scatter.sizes() << std::endl;
     // Compute confidence maps and final intensity
     torch::Tensor confidence_maps = attenuation_total * reflection_total;
     torch::Tensor b = confidence_maps * psf_scatter;
     torch::Tensor r = confidence_maps * reflection_coeff;
-
     // Simplified intensity calculation (removed amplification)
     torch::Tensor intensity_map = b + r;
-
     torch::Dict<std::string, torch::Tensor> results = torch::Dict<std::string, torch::Tensor>();
-
     // TODO: why isnt default constructor working
     results.insert("intensity_map", intensity_map);
     results.insert("attenuation_coeff", attenuation_coeff);
@@ -295,10 +280,14 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::process_raw_rays(torc
     results.insert("b", b);
     results.insert("r", r);
     results.insert("confidence_maps", confidence_maps);
-    std::cout << "Done" << std::endl;
+    std::cout << "Intensity map " << intensity_map.sizes() << std::endl;
+    std::cout << "Intensity map " << intensity_map[0][0][-1][-1] << std::endl;
     return results;
 }
 torch::Tensor UltraNeRFRenderer::get_output_data(torch::Dict<std::string, torch::Tensor> output_dict)
 {
+    std::cout << "Intensity map " << output_dict.at("intensity_map").sizes() << std::endl;
+    std::cout << "Intensity map " << output_dict.at("intensity_map")[0][0][-1][-1] << std::endl;
+
     return output_dict.at("intensity_map");
 }

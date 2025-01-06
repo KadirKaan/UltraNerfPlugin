@@ -2,14 +2,16 @@
 #pragma once
 
 #include <ImFusion/GUI/AlgorithmController.h>
-
+#include <ImFusion/GL/GlRectangleBillboard.h>
 #include <QtWidgets/QWidget>
-
+#include <ImFusion/GUI/DisplayWidgetMulti.h>
+#include <ImFusion/GUI/DefaultAlgorithmController.h>
 class Ui_UltraNerfInferenceController;
 
 namespace ImFusion
 {
 	class UltraNerfInferenceAlgorithm;
+	class InteractiveObject;
 
 	// This class implements the GUI controller for the UltraNerfInferenceAlgorithm.
 	class UltraNerfInferenceController : public QWidget, public AlgorithmController
@@ -29,9 +31,11 @@ namespace ImFusion
 	public slots:
 		void onCompute();
 		void onLoadModel();
+		void onClickMouse();
 
 	protected:
 		Ui_UltraNerfInferenceController *m_ui; ///< The actual GUI
 		UltraNerfInferenceAlgorithm *m_alg;	   //< The algorithm instance
+		std::unique_ptr<InteractiveObject> m_myInteractiveObject;
 	};
 }

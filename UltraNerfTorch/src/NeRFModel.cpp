@@ -27,6 +27,7 @@ NeRFModel::NeRFModel(const torch::Device &device,
       })),
       torch::nn::Module("NeRFModel")
 {
+    this->to(device_);
     // Initialize pts_linears ModuleList
     // First layer: input_ch -> W
     input_channels_ = embedder_.get_out_dim();
@@ -62,7 +63,7 @@ NeRFModel::NeRFModel(const torch::Device &device,
 };
 torch::Tensor NeRFModel::forward(const torch::Tensor &x)
 {
-    auto h = x;
+    auto h = x.to(device_);
     int index = 0;
     for (const auto &layer : pts_linears_->children())
     {
@@ -91,31 +92,42 @@ torch::Tensor NeRFModel::run_network(const torch::Tensor &x)
     torch::Tensor encoded_inputs = add_positional_encoding(inputs_flat);
     input_sizes.push_back(output_channels_);
     torch::Tensor outputs = forward(encoded_inputs).reshape(input_sizes);
-    std::cout << "output shape: " << outputs.sizes() << std::endl;
     return outputs;
 }
 void NeRFModel::load_weights(const std::string &path)
 {
     // Load the PyTorch model weights
-    // torch::jit::script::Module pytorch_model = torch::jit::load(path);
+    torch::jit::script::Module pytorch_model = torch::jit::load(path);
 
-    // // Load weights for pts_linears
-    // for (size_t i = 0; i < pts_linears_->size(); i++)
-    // {
-    //     std::string weight_key = "pts_linears." + std::to_string(i) + ".weight";
-    //     std::string bias_key = "pts_linears." + std::to_string(i) + ".bias";
+    size_t i = 0;
 
-    //     auto &layer = *std::dynamic_pointer_cast<torch::nn::Linear>(pts_linears_[i]);
+    std::map<std::string, torch::Tensor> params = std::map<std::string, torch::Tensor>();
+    for (const auto param : pytorch_model.named_parameters())
+    {
+        params.insert({param.name, param.value});
+    }
+    for (const auto &module : pts_linears_->children())
+    {
+        if (i >= D_)
+        {
+            break;
+        }
 
-    //     // Load weights and biases
-    //     layer->weight.copy_(pytorch_model.attr(weight_key).toTensor());
-    //     layer->bias.copy_(pytorch_model.attr(bias_key).toTensor());
-    // }
+        if (auto *linear = module.get()->as<torch::nn::Linear>())
+        {
+            // Load weights and biases
+            std::string weight_key = "pts_linears." + std::to_string(i) + ".weight";
+            std::string bias_key = "pts_linears." + std::to_string(i) + ".bias";
 
-    // // Load weights for output_linear
-    // output_linear_->weight.copy_(pytorch_model.attr("output_linear.weight").toTensor());
-    // output_linear_->bias.copy_(pytorch_model.attr("output_linear.bias").toTensor());
+            linear->weight = params[weight_key].clone().to(device_);
+            linear->bias = params[bias_key].clone().to(device_);
+        }
+        i++;
+    }
 
+    // // // Load weights for output_linear
+    output_linear_->weight = params["output_linear.weight"].clone().to(device_);
+    output_linear_->bias = params["output_linear.bias"].clone().to(device_);
     this->initialized_ = true;
 }
 
@@ -130,7 +142,7 @@ void NeRFModel::load_weights(const std::string &path)
  */
 torch::Tensor NeRFModel::add_positional_encoding(const torch::Tensor &x) const
 {
-    return embedder_.embed(x);
+    return embedder_.embed(x).to(device_);
 }
 
 torch::Device NeRFModel::get_device() { return device_; }

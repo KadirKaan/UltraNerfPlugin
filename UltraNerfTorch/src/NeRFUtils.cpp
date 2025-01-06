@@ -2,6 +2,8 @@
 
 #include <fstream>
 #include <iostream>
+#include <string_view>
+
 torch::Device get_device()
 {
     return torch::cuda::is_available() ? torch::kCUDA : torch::kCPU;
@@ -52,17 +54,14 @@ torch::Tensor raw2attenuation(torch::Tensor raw, torch::Tensor dists)
 
 void accumulate_rays(torch::Dict<std::string, torch::Tensor> &render_results, torch::Dict<std::string, torch::Tensor> batch_render_results)
 {
-    std::cout << "Accumulating rays" << std::endl;
     // Accumulate results
     for (auto it = batch_render_results.begin(); it != batch_render_results.end(); ++it)
     {
         if (render_results.find(it->key()) == render_results.end())
         {
-            std::cout << "Found new key: " << it->key() << std::endl;
             // First time seeing this key, create a list to accumulate
             render_results.insert(it->key(), torch::empty_like(it->value()));
         }
-        std::cout << "Accumulating key: " << it->key() << std::endl;
         render_results.find(it->key())->value().add(it->value());
     }
 };
@@ -103,4 +102,80 @@ torch::Tensor generate_random_rays(Point upper_point, Point lower_point, int num
         y += increment;
     }
     return rays;
+}
+
+cv::Mat tensor_to_grayscale_opencv(const torch::Tensor &tensor)
+{
+    // Ensure tensor is on CPU and contiguous
+    auto tensor_cpu = tensor.cpu().contiguous();
+
+    // Convert to uint8 if in float format
+    if (tensor_cpu.dtype() == torch::kFloat32)
+    {
+        // Scale to 0-255 if in range 0-1
+        if (tensor_cpu.max().item<float>() <= 1.0)
+        {
+            tensor_cpu = tensor_cpu * 255.0;
+        }
+        tensor_cpu = tensor_cpu.clamp(0, 255).to(torch::kUInt8);
+    }
+
+    cv::Mat output_mat;
+
+    if (tensor_cpu.dim() == 2)
+    {
+        // Already grayscale
+        output_mat = cv::Mat(
+            tensor_cpu.size(0),
+            tensor_cpu.size(1),
+            CV_8UC1,
+            tensor_cpu.data_ptr<unsigned char>());
+    }
+    else if (tensor_cpu.dim() == 3)
+    {
+        int channels = tensor_cpu.size(0);
+
+        if (channels == 1)
+        {
+            // Single channel, just reshape
+            tensor_cpu = tensor_cpu.squeeze(0);
+            output_mat = cv::Mat(
+                tensor_cpu.size(0),
+                tensor_cpu.size(1),
+                CV_8UC1,
+                tensor_cpu.data_ptr<unsigned char>());
+        }
+        else if (channels == 3 || channels == 4)
+        {
+            // RGB/RGBA to grayscale
+            // First convert to HWC format
+            tensor_cpu = tensor_cpu.permute({1, 2, 0});
+
+            // Create temporary RGB Mat
+            cv::Mat temp_mat(
+                tensor_cpu.size(0),
+                tensor_cpu.size(1),
+                channels == 3 ? CV_8UC3 : CV_8UC4,
+                tensor_cpu.data_ptr<unsigned char>());
+
+            // Convert RGB to BGR if it's a 3-channel image
+            if (channels == 3)
+            {
+                cv::cvtColor(temp_mat, temp_mat, cv::COLOR_RGB2BGR);
+            }
+
+            // Convert to grayscale
+            cv::cvtColor(temp_mat, output_mat, channels == 3 ? cv::COLOR_BGR2GRAY : cv::COLOR_BGRA2GRAY);
+        }
+        else
+        {
+            throw std::runtime_error("Unsupported number of channels");
+        }
+    }
+    else
+    {
+        throw std::runtime_error("Unsupported tensor dimensions");
+    }
+
+    return output_mat.clone();
 }

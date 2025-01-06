@@ -3,6 +3,9 @@
 UltraNerfTorch/build
 /cmake-build-debug
 
+
+#Model Files
+/models
 #Lib files
 UltraNerfTorch/libtorch
 

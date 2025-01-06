@@ -15,7 +15,7 @@
 
 namespace ImFusion
 {
-	UltraNerfInferenceAlgorithm::UltraNerfInferenceAlgorithm() : renderer(UltraNeRFRenderer(NeRFModel(get_device()), 512, 512, 1.0, 1.0))
+	UltraNerfInferenceAlgorithm::UltraNerfInferenceAlgorithm()
 	{
 	}
 
@@ -39,13 +39,13 @@ namespace ImFusion
 	{
 		// set generic error status until we have finished
 		m_status = static_cast<int>(Status::Error);
-		if (!renderer.get_model().is_initialized())
-		{
-			return;
-		}
-		// TODO: preprocessing
-		// model.forward({xCoordinate, yCoordinate, zCoordinate});
-		// TODO: postprocessing
+		// if (!renderer.get_model().is_initialized())
+		// {
+		// 	return;
+		// }
+		// // TODO: preprocessing
+		// // model.forward({xCoordinate, yCoordinate, zCoordinate});
+		// // TODO: postprocessing
 		m_imgOut = std::make_unique<SharedImageSet>();
 		// set algorithm status to success
 		m_status = static_cast<int>(Status::Success);
@@ -54,7 +54,7 @@ namespace ImFusion
 	void UltraNerfInferenceAlgorithm::loadModel()
 	{
 		std::string modelPath = this->modelPath;
-		this->renderer.get_model().load_weights(modelPath);
+		// this->renderer.get_model().load_weights(modelPath);
 	}
 	OwningDataList UltraNerfInferenceAlgorithm::takeOutput()
 	{

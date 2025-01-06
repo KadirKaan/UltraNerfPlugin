@@ -42,7 +42,7 @@ public:
               int inputChViews = 3,
               int outputChannels = 5,
               std::vector<int> skips = {4},
-              int embeddingLevel = 6,
+              int embeddingLevel = 10,
               bool useViewDirs = false);
     torch::Tensor forward(const torch::Tensor &inputs);
     torch::Tensor run_network(const torch::Tensor &inputs);
