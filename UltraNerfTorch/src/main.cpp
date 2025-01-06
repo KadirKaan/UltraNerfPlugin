@@ -33,9 +33,8 @@ int main()
 
     torch::Dict<std::string, torch::Tensor> render_results = renderer.render_nerf(std::nullopt, std::optional<torch::Tensor>(c2w));
     torch::Tensor output = renderer.get_output_data(render_results);
-    // TODO: fix intensity map incorrectness
-    cv::Mat gray_image2 = tensor_to_grayscale_opencv(output.squeeze());
-    cv::imshow("Grayscale Image", gray_image2);
+    cv::Mat gray_image = tensor_to_grayscale_opencv(output.squeeze());
+    cv::imshow("Grayscale Image", gray_image);
     cv::waitKey(0);
     return 0;
 }

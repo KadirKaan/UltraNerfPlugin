@@ -35,7 +35,7 @@ private:
     float sw;
     float sh;
     float near = 0.0;
-    float far = 55.0 * 0.001;
+    float far = 0.14;
     int samples_per_ray = 512;
 };
 #endif
