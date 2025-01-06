@@ -49,6 +49,9 @@ torch::Tensor create_gaussian_kernel(int size, float mean, float std)
 }
 torch::Tensor raw2attenuation(torch::Tensor raw, torch::Tensor dists)
 {
+    std::cout << "raw2attenuation" << std::endl;
+    std::cout << "raw" << raw.sizes() << std::endl;
+    std::cout << "dists" << dists.sizes() << std::endl;
     return torch::exp(-raw * dists);
 };
 

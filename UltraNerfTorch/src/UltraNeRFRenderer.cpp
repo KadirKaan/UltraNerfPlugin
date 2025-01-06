@@ -205,14 +205,12 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::process_raw_rays(torc
     // Generate z values
     torch::Tensor t_vals = torch::linspace(0.0, 1.0, H).to(raw.device());
     torch::Tensor z_vals = t_vals.expand({batch_size, W, -1}).to(raw.device());
-
     // Calculate distances
     torch::Tensor dists = torch::abs(
-        z_vals.index({torch::indexing::Ellipsis, torch::indexing::Slice(None, -1), torch::indexing::Slice(None, 1)}) -
-        z_vals.index({torch::indexing::Ellipsis, torch::indexing::Slice(1, None), torch::indexing::Slice(None, 1)}));
-    dists = torch::squeeze(dists);
-
-    auto last_col = dists.index({"...", -1}).unsqueeze(-1).to(raw.device());
+        z_vals.index({torch::indexing::Ellipsis, torch::indexing::Slice(None, -1), torch::indexing::None}) -
+        z_vals.index({torch::indexing::Ellipsis, torch::indexing::Slice(1, None), torch::indexing::None}));
+    dists = dists.squeeze();
+    auto last_col = dists.index({torch::indexing::Slice(), torch::indexing::Slice(-1), torch::indexing::None}).squeeze(-1);
     dists = torch::cat({dists, last_col}, -1);
 
     // Attenuation
