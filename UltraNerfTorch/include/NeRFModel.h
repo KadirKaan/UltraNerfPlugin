@@ -52,6 +52,7 @@ public:
     torch::Tensor add_positional_encoding(const torch::Tensor &x) const;
 
 private:
+    // TODO: this is somehow broken
     const torch::Device &device_;
     bool initialized_ = false;
     int embedding_level_;

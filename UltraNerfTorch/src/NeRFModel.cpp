@@ -53,33 +53,34 @@ NeRFModel::NeRFModel(const torch::Device &device,
     {
         if (auto *linear = module.get()->as<torch::nn::Linear>())
         {
-            torch::nn::init::uniform_(linear->weight, -0.05, 0.05);
-            torch::nn::init::uniform_(linear->bias, -0.05, 0.05);
+            torch::nn::init::uniform_(linear->weight, -0.05, 0.05).to(get_device());
+            torch::nn::init::uniform_(linear->bias, -0.05, 0.05).to(get_device());
         }
     }
 
-    torch::nn::init::uniform_(output_linear_->weight, -0.05, 0.05);
-    torch::nn::init::uniform_(output_linear_->bias, -0.05, 0.05);
+    torch::nn::init::uniform_(output_linear_->weight, -0.05, 0.05).to(get_device());
+    torch::nn::init::uniform_(output_linear_->bias, -0.05, 0.05).to(get_device());
 };
 torch::Tensor NeRFModel::forward(const torch::Tensor &x)
 {
-    auto h = x.to(device_);
+
+    auto h = x.clone();
     int index = 0;
     for (const auto &layer : pts_linears_->children())
     {
         // Use layer here
         if (auto *linear = layer.get()->as<torch::nn::Linear>())
         {
-            h = linear->forward(h);
+            h = linear->forward(h.to(linear->weight.device()));
         }
         h = torch::relu(h);
         if (std::find(skips_.begin(), skips_.end(), index) != skips_.end())
         {
-            h = torch::cat({x, h}, -1);
+            h = torch::cat({x.to(h.device()), h}, -1);
         }
         index++;
     }
-    return output_linear_(h);
+    return output_linear_(h.to(output_linear_->weight.device()));
 }
 
 torch::Tensor NeRFModel::run_network(const torch::Tensor &x)
@@ -119,15 +120,15 @@ void NeRFModel::load_weights(const std::string &path)
             std::string weight_key = "pts_linears." + std::to_string(i) + ".weight";
             std::string bias_key = "pts_linears." + std::to_string(i) + ".bias";
 
-            linear->weight = params[weight_key].clone().to(device_);
-            linear->bias = params[bias_key].clone().to(device_);
+            linear->weight = params[weight_key].clone().to(get_device());
+            linear->bias = params[bias_key].clone().to(get_device());
         }
         i++;
     }
 
     // // // Load weights for output_linear
-    output_linear_->weight = params["output_linear.weight"].clone().to(device_);
-    output_linear_->bias = params["output_linear.bias"].clone().to(device_);
+    output_linear_->weight = params["output_linear.weight"].clone().to(get_device());
+    output_linear_->bias = params["output_linear.bias"].clone().to(get_device());
     this->initialized_ = true;
 }
 
@@ -142,7 +143,7 @@ void NeRFModel::load_weights(const std::string &path)
  */
 torch::Tensor NeRFModel::add_positional_encoding(const torch::Tensor &x) const
 {
-    return embedder_.embed(x).to(device_);
+    return embedder_.embed(x);
 }
 
 torch::Device NeRFModel::get_device() { return device_; }
@@ -213,7 +214,6 @@ torch::Tensor Embedder::embed(const torch::Tensor &inputs) const
     {
         outputs.push_back(fn(inputs));
     }
-
     // Concatenate along the last dimension
     return torch::cat(outputs, -1);
 }

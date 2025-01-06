@@ -57,12 +57,10 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::render_ray_batches(st
     {
         auto raw_ray_chunks = pass_rays_to_nerf(rays_chunk);
         auto rendered_ray_chunks = process_raw_rays(raw_ray_chunks);
-        std::cout << rendered_ray_chunks.at("intensity_map")[0][0][-1][-1] << std::endl;
         render_results = rendered_ray_chunks;
         // TODO: add batch rendering
         // accumulate_rays(render_results, rendered_ray_chunks);
     }
-    std::cout << render_results.at("intensity_map")[0][0][-1][-1] << std::endl;
     return render_results;
     // // Concatenate results for each key
     // torch::Dict<std::string, torch::Tensor> flat_render_results = torch::Dict<std::string, torch::Tensor>();
@@ -80,7 +78,6 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::render_nerf(
     std::pair<torch::Tensor, torch::Tensor> rays = get_rays(c2w, input_rays);
     torch::Tensor rays_o = rays.first;
     torch::Tensor rays_d = rays.second;
-
     // Reshape rays
     auto sh = rays_d.sizes();
     rays_o = rays_o.reshape({-1, 3}).to(torch::kFloat32);
@@ -108,21 +105,17 @@ std::pair<torch::Tensor, torch::Tensor> UltraNeRFRenderer::generate_linear_us_ra
     torch::Tensor x = torch::arange(-W / 2, W / 2, torch::TensorOptions().dtype(torch::kFloat32)) * sw;
     torch::Tensor y = torch::zeros_like(x);
     torch::Tensor z = torch::zeros_like(x);
-
     // Stack and prepare the origin base
     torch::Tensor origin_base = torch::stack({x, y, z}, /*dim=*/1);
     torch::Tensor origin_base_prim = origin_base.unsqueeze(/*dim=*/-2);
-
     // Rotate the origin base
-    torch::Tensor origin_rotated = R * origin_base_prim;
+    torch::Tensor origin_rotated = R * origin_base_prim.to(R.device());
     torch::Tensor ray_o_r = torch::sum(origin_rotated, /*dim=*/-1);
     torch::Tensor rays_o = ray_o_r + t;
-
     // Define direction base and rotate
     torch::Tensor dirs_base = torch::tensor({0., 1., 0.}, torch::TensorOptions().dtype(torch::kFloat32));
-    torch::Tensor dirs_r = torch::mv(R, dirs_base);
+    torch::Tensor dirs_r = torch::mv(R, dirs_base.to(R.device()));
     torch::Tensor rays_d = dirs_r.expand_as(rays_o);
-
     return {rays_o, rays_d};
 };
 
@@ -156,7 +149,7 @@ torch::Tensor UltraNeRFRenderer::pass_rays_to_nerf(
     torch::Tensor far = bounds.index({torch::indexing::Ellipsis, 1});
 
     // Sampling along rays
-    torch::Tensor t_vals = torch::linspace(0., 1., samples_per_ray);
+    torch::Tensor t_vals = torch::linspace(0., 1., samples_per_ray).to(ray_batch.device());
     torch::Tensor z_vals;
 
     if (!lindisp)
@@ -168,12 +161,10 @@ torch::Tensor UltraNeRFRenderer::pass_rays_to_nerf(
         z_vals = 1. / (1. / near * (1. - t_vals) + 1. / far * t_vals);
     }
     z_vals = z_vals.expand({N_rays, samples_per_ray});
-
     // Points in space to evaluate
     torch::Tensor origin = rays_o.unsqueeze(-2);
     torch::Tensor step = rays_d.unsqueeze(-2) * z_vals.unsqueeze(-1);
     torch::Tensor pts = step + origin;
-
     // Evaluate model at each point
     torch::Tensor raw = model_ptr_->run_network(pts);
     return raw;
@@ -202,7 +193,6 @@ torch::Tensor cumprod_exclusive(torch::Tensor tensor)
 torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::process_raw_rays(torch::Tensor raw)
 {
     this->gaussian_kernel = gaussian_kernel;
-
     // Preprocessing raw tensor
     raw = raw.unsqueeze(0).unsqueeze(1);
     raw = raw.permute({0, 1, 3, 2, 4});
@@ -213,8 +203,8 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::process_raw_rays(torc
     auto maps = raw.size(4);
 
     // Generate z values
-    torch::Tensor t_vals = torch::linspace(0.0, 1.0, H);
-    torch::Tensor z_vals = t_vals.expand({batch_size, W, -1});
+    torch::Tensor t_vals = torch::linspace(0.0, 1.0, H).to(raw.device());
+    torch::Tensor z_vals = t_vals.expand({batch_size, W, -1}).to(raw.device());
 
     // Calculate distances
     torch::Tensor dists = torch::abs(
@@ -222,7 +212,7 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::process_raw_rays(torc
         z_vals.index({torch::indexing::Ellipsis, torch::indexing::Slice(1, None), torch::indexing::Slice(None, 1)}));
     dists = torch::squeeze(dists);
 
-    auto last_col = dists.index({"...", -1}).unsqueeze(-1);
+    auto last_col = dists.index({"...", -1}).unsqueeze(-1).to(raw.device());
     dists = torch::cat({dists, last_col}, -1);
 
     // Attenuation
@@ -256,7 +246,7 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::process_raw_rays(torc
     // Convolution (assuming g_kernel is available)
     torch::Tensor psf_scatter = torch::nn::functional::conv2d(
                                     scatterers_map,
-                                    gaussian_kernel.unsqueeze(0).unsqueeze(0),
+                                    gaussian_kernel.to(raw.device()).unsqueeze(0).unsqueeze(0),
                                     torch::nn::functional::Conv2dFuncOptions()
                                         .stride(1)
                                         .padding(gaussian_kernel.size(0) / 2))
@@ -280,14 +270,9 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::process_raw_rays(torc
     results.insert("b", b);
     results.insert("r", r);
     results.insert("confidence_maps", confidence_maps);
-    std::cout << "Intensity map " << intensity_map.sizes() << std::endl;
-    std::cout << "Intensity map " << intensity_map[0][0][-1][-1] << std::endl;
     return results;
 }
 torch::Tensor UltraNeRFRenderer::get_output_data(torch::Dict<std::string, torch::Tensor> output_dict)
 {
-    std::cout << "Intensity map " << output_dict.at("intensity_map").sizes() << std::endl;
-    std::cout << "Intensity map " << output_dict.at("intensity_map")[0][0][-1][-1] << std::endl;
-
     return output_dict.at("intensity_map");
 }
