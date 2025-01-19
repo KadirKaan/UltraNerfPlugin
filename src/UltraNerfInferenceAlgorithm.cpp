@@ -17,6 +17,18 @@ namespace ImFusion
 {
 	UltraNerfInferenceAlgorithm::UltraNerfInferenceAlgorithm()
 	{
+		// TODO: remove hard coded values
+		float H = 512.0;
+		float W = 256.0;
+		float scale = 0.001;
+		float probe_depth = 140.0 * scale;
+		float probe_width = 80.0 * scale;
+		float sh = probe_depth / H;
+		float sw = probe_width / W;
+		torch::manual_seed(0);
+		NeRFModel model = NeRFModel(get_device());
+		model.load_weights("/home/kkaan/Project/UltraNerfPlugin/models/network_fn117000.pt");
+		this->renderer_ptr = std::make_unique<UltraNeRFRenderer>(model, int(H), int(W), sw, sh);
 	}
 
 	UltraNerfInferenceAlgorithm::~UltraNerfInferenceAlgorithm()
@@ -39,13 +51,15 @@ namespace ImFusion
 	{
 		// set generic error status until we have finished
 		m_status = static_cast<int>(Status::Error);
-		// if (!renderer.get_model().is_initialized())
-		// {
-		// 	return;
-		// }
-		// // TODO: preprocessing
-		// // model.forward({xCoordinate, yCoordinate, zCoordinate});
-		// // TODO: postprocessing
+		torch::Tensor c2w = torch::tensor({-0.9998, 0.0131, 0.0160, 0.0726,
+										   0.0138, 0.9988, 0.0462, -0.0445,
+										   -0.0154, 0.0464, -0.9988, 0.0538,
+										   0.0000, 0.0000, 0.0000, 1.0000},
+										  torch::kFloat32)
+								.to(get_device())
+								.reshape({4, 4});
+		torch::Dict<std::string, torch::Tensor> render_results = renderer_ptr.get()->render_nerf(std::nullopt, std::optional<torch::Tensor>(c2w));
+		torch::Tensor output = renderer_ptr.get()->get_output_data(render_results);
 		m_imgOut = std::make_unique<SharedImageSet>();
 		// set algorithm status to success
 		m_status = static_cast<int>(Status::Success);
@@ -54,6 +68,7 @@ namespace ImFusion
 	void UltraNerfInferenceAlgorithm::loadModel()
 	{
 		std::string modelPath = this->model_path;
+		// todo expose load model
 		// this->renderer.get_model().load_weights(modelPath);
 	}
 	OwningDataList UltraNerfInferenceAlgorithm::takeOutput()

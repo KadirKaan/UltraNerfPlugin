@@ -3,7 +3,8 @@
 
 #include <ImFusion/Base/Algorithm.h>
 #include <memory>
-
+#include <UltraNerfTorch/include/UltraNeRFRenderer.h>
+#include <UltraNerfTorch/include/NeRFUtils.h>
 namespace ImFusion
 {
 	class SharedImageSet;
@@ -28,7 +29,7 @@ namespace ImFusion
 		UltraNerfInferenceAlgorithm();
 		~UltraNerfInferenceAlgorithm();
 
-		void setModelPath(std::string modelPath) { this->model_path = model_path; }
+		void setModelPath(std::string model_path) { this->model_path = model_path; }
 		void setPoints(Point point_top, Point point_bottom)
 		{
 			this->point_pair.first = point_top;
@@ -60,5 +61,6 @@ namespace ImFusion
 		std::pair<Point, Point> point_pair = std::make_pair(Point(0, 0, 0), Point(0, 0, 0));
 		std::string model_path = "";
 		BLINE_ORIGIN bline_origin = BLINE_ORIGIN::TOP;
+		std::unique_ptr<UltraNeRFRenderer> renderer_ptr = nullptr;
 	};
 };

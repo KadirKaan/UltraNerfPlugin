@@ -33,7 +33,6 @@ namespace ImFusion
 	public slots:
 		void onCompute();
 		void onLoadModel();
-		void onClickMouse();
 		void on_get_points();
 
 	protected:
