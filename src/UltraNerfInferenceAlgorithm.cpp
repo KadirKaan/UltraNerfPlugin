@@ -53,7 +53,7 @@ namespace ImFusion
 
 	void UltraNerfInferenceAlgorithm::loadModel()
 	{
-		std::string modelPath = this->modelPath;
+		std::string modelPath = this->model_path;
 		// this->renderer.get_model().load_weights(modelPath);
 	}
 	OwningDataList UltraNerfInferenceAlgorithm::takeOutput()
@@ -74,7 +74,7 @@ namespace ImFusion
 		p->param("xCoorBot", this->point_pair.second.x);
 		p->param("yCoorBot", this->point_pair.second.y);
 		p->param("zCoorBot", this->point_pair.second.z);
-		p->param("modelPath", modelPath);
+		p->param("modelPath", model_path);
 
 		signalParametersChanged.emitSignal();
 	}
@@ -84,6 +84,6 @@ namespace ImFusion
 		// this method is necessary to store our settings in a workspace file
 		if (p == nullptr)
 			return;
-		p->setParam("modelPath", modelPath, "");
+		p->setParam("modelPath", model_path, "");
 	}
 }

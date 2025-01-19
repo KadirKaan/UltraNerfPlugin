@@ -89,20 +89,70 @@ torch::Tensor cos_fn(const torch::Tensor &x)
  * @param num_rays the number of rays to generate
  * @return a tensor of shape (num_rays, 6) containing the rays
  */
-torch::Tensor generate_random_rays(Point upper_point, Point lower_point, int num_rays)
+
+enum INCREMENT_AXIS
+{
+    X,
+    Y
+};
+
+torch::Tensor generate_rays(Point upper_point, Point lower_point, int num_rays, BLINE_ORIGIN origin)
 {
     torch::Tensor rays = torch::empty({num_rays, 6}, torch::TensorOptions().dtype(torch::kFloat32));
-    // test rays are directed towards x axis
+    // test rays are all in the same plane
     assert(upper_point.z == lower_point.z);
-    float increment = (lower_point.y - upper_point.y) / num_rays;
-    float y = upper_point.y;
+    Point start_point = Point(0, 0, 0);
+    Point end_point = Point(0, 0, 0);
+    float increment;
+    INCREMENT_AXIS increment_axis = INCREMENT_AXIS::X;
+
+    // From two points, generates rays. Rays are ordered such that they are listed from top to bottom (if origin is left or right)
+    // or left to right(if origin is top or bottom) depending on the origin
+    switch (origin)
+    {
+    case BLINE_ORIGIN::TOP:
+        start_point = upper_point;
+        end_point = Point(upper_point.x, lower_point.y, upper_point.z);
+        increment_axis = INCREMENT_AXIS::X;
+        increment = (lower_point.x - upper_point.x) / num_rays;
+        break;
+    case BLINE_ORIGIN::BOTTOM:
+        start_point = Point(upper_point.x, lower_point.y, upper_point.z);
+        end_point = upper_point;
+        increment_axis = INCREMENT_AXIS::X;
+        increment = (lower_point.x - upper_point.x) / num_rays;
+        break;
+    case BLINE_ORIGIN::LEFT:
+        start_point = upper_point;
+        end_point = Point(lower_point.x, upper_point.y, upper_point.z);
+        increment_axis = INCREMENT_AXIS::Y;
+        increment = (lower_point.y - upper_point.y) / num_rays;
+        break;
+    case BLINE_ORIGIN::RIGHT:
+        start_point = Point(lower_point.x, upper_point.y, upper_point.z);
+        end_point = upper_point;
+        increment_axis = INCREMENT_AXIS::Y;
+        increment = (lower_point.y - upper_point.y) / num_rays;
+        break;
+    }
+
     for (int i = 0; i < num_rays; i++)
     {
-        torch::Tensor ray_o = torch::tensor({upper_point.x, y, upper_point.z}, torch::TensorOptions().dtype(torch::kFloat32));
-        torch::Tensor ray_d = torch::tensor({lower_point.x, y, upper_point.z}, torch::TensorOptions().dtype(torch::kFloat32));
+
+        torch::Tensor ray_o = torch::tensor({start_point.x, start_point.y, start_point.z}, torch::TensorOptions().dtype(torch::kFloat32));
+        torch::Tensor ray_d = torch::tensor({end_point.x, end_point.y, end_point.z}, torch::TensorOptions().dtype(torch::kFloat32));
         torch::Tensor ray = torch::cat({ray_o, ray_d}, /*dim=*/0);
         rays.index_put_({i}, ray);
-        y += increment;
+        if (INCREMENT_AXIS::X == increment_axis)
+        {
+            end_point.x += increment;
+            start_point.x += increment;
+        }
+        else if (INCREMENT_AXIS::Y == increment_axis)
+        {
+            end_point.y += increment;
+            start_point.y += increment;
+        }
     }
     return rays;
 }

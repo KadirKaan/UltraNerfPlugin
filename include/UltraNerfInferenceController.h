@@ -2,17 +2,19 @@
 #pragma once
 
 #include <ImFusion/GUI/AlgorithmController.h>
-#include <ImFusion/GL/GlRectangleBillboard.h>
 #include <QtWidgets/QWidget>
 #include <ImFusion/GUI/DisplayWidgetMulti.h>
-#include <ImFusion/GUI/DefaultAlgorithmController.h>
+#include <ImFusion/GUI/AnnotationModel.h>
+#include <ImFusion/GL/GlRectangle.h>
+
 class Ui_UltraNerfInferenceController;
 
 namespace ImFusion
 {
 	class UltraNerfInferenceAlgorithm;
 	class InteractiveObject;
-
+	class AnnotationModel;
+	class GlRectangle;
 	// This class implements the GUI controller for the UltraNerfInferenceAlgorithm.
 	class UltraNerfInferenceController : public QWidget, public AlgorithmController
 	{
@@ -32,10 +34,14 @@ namespace ImFusion
 		void onCompute();
 		void onLoadModel();
 		void onClickMouse();
+		void on_get_points();
 
 	protected:
 		Ui_UltraNerfInferenceController *m_ui; ///< The actual GUI
 		UltraNerfInferenceAlgorithm *m_alg;	   //< The algorithm instance
-		std::unique_ptr<InteractiveObject> m_myInteractiveObject;
+		bool drawing = false;
+
+	private:
+		void copy_points(const GlRectangle *rectangle);
 	};
 }

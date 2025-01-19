@@ -17,8 +17,6 @@ int main()
     NeRFModel model = NeRFModel(get_device());
     model.load_weights("/home/kkaan/Project/UltraNerfPlugin/models/network_fn117000.pt");
     UltraNeRFRenderer renderer = UltraNeRFRenderer(model, int(H), int(W), sw, sh);
-    // torch::Tensor rays = generate_random_rays({0.0, 0.0, 0.0}, {1024.0, 0.0, 0.0}, 512);
-
     // std::pair<torch::Tensor, torch::Tensor> ray_o_d_pairs = std::make_pair(rays.index({torch::indexing::Slice(), torch::indexing::Slice(0, 3)}),
     //                                                                        rays.index({torch::indexing::Slice(), torch::indexing::Slice(3, 6)}));
 

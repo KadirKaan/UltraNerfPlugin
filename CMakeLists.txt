@@ -25,7 +25,6 @@ set(Sources
   src/UltraNerfInferenceController.cpp
   src/UltraNerfFactory.cpp
   src/UltraNerfPlugin.cpp
-  src/MyCustomGlObject.cpp
   )
 set(Headers
   include/UltraNerfTrainingAlgorithm.h
@@ -34,7 +33,6 @@ set(Headers
   include/UltraNerfInferenceController.h
   include/UltraNerfFactory.h
   include/UltraNerfPlugin.h
-  include/MyCustomGlObject.h
   )
 set(UiSources
 	src/UltraNerfTrainingController.ui

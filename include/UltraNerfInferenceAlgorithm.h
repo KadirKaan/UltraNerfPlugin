@@ -7,6 +7,14 @@
 namespace ImFusion
 {
 	class SharedImageSet;
+
+	enum class BLINE_ORIGIN : int
+	{
+		TOP = 0,
+		LEFT = 1,
+		RIGHT = 2,
+		BOTTOM = 3
+	};
 	struct Point
 	{
 		float x;
@@ -20,12 +28,14 @@ namespace ImFusion
 		UltraNerfInferenceAlgorithm();
 		~UltraNerfInferenceAlgorithm();
 
-		void setModelPath(std::string modelPath) { this->modelPath = modelPath; }
+		void setModelPath(std::string modelPath) { this->model_path = model_path; }
 		void setPoints(Point point_top, Point point_bottom)
 		{
 			this->point_pair.first = point_top;
 			this->point_pair.second = point_bottom;
 		};
+
+		void setBlineOrigin(BLINE_ORIGIN origin) { this->bline_origin = origin; }
 
 		// \name	Methods implementing the algorithm interface
 		//\{
@@ -48,6 +58,7 @@ namespace ImFusion
 		std::unique_ptr<SharedImageSet> m_imgOut; ///< Output image after processing
 		// TODO: derive these
 		std::pair<Point, Point> point_pair = std::make_pair(Point(0, 0, 0), Point(0, 0, 0));
-		std::string modelPath = "";
+		std::string model_path = "";
+		BLINE_ORIGIN bline_origin = BLINE_ORIGIN::TOP;
 	};
 };
