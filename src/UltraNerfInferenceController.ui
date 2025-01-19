@@ -122,16 +122,15 @@
                 <widget class="QLineEdit" name="modelPath">
                 </widget>
             </item>
-            <item row="4" column="0" colspan="3">
+            <item row="4" column="0" colspan="4">
                 <widget class="QLabel" name="originLabel">
                     <property name="text">
                         <string>Origin of BLines</string>
                     </property>
                 </widget>
             </item>
-
-            <item row="4" column="0" colspan="3">
-                <widget class="QMetaEnum" name="originEnum">
+            <item row="4" column="3" colspan="3">
+                <widget class="QLineEdit" name="originEnum">
                 </widget>
             </item>
             <item row="5" column="0" colspan="3">

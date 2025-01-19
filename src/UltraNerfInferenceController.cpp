@@ -33,7 +33,7 @@ namespace ImFusion
 	{
 		m_alg->setPoints(Point(m_ui->xCoorTop->text().toFloat(), m_ui->yCoorTop->text().toFloat(), m_ui->zCoorTop->text().toFloat()),
 						 Point(m_ui->xCoorBot->text().toFloat(), m_ui->yCoorBot->text().toFloat(), m_ui->zCoorBot->text().toFloat()));
-		m_alg->setBlineOrigin(BLINE_ORIGIN(m_ui->originEnum));
+		m_alg->setBlineOrigin(BLINE_ORIGIN::BOTTOM);
 		// Call compute on the algorithm
 		m_alg->compute();
 		m_main->dataModel()->add(m_alg->takeOutput());
