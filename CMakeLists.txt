@@ -2,9 +2,7 @@
 cmake_minimum_required(VERSION 3.5.0)
 project(UltraNerfPlugin)
 add_compile_options("-fPIC")
-#add_compile_options("-fno-sized-deallocation")
-
-#Locate torch
+add_compile_options("-fno-sized-deallocation")
 
 # Locate the ImFusion SDK.
 find_package(ImFusionLib REQUIRED)
@@ -44,23 +42,17 @@ set(UiSources
 list(APPEND CMAKE_PREFIX_PATH "UltraNerfTorch/libtorch")
 find_package(Torch REQUIRED)
 include_directories(SYSTEM ${TORCH_INCLUDE_DIRS})
-set(TORCH_STATIC ON)
 
 # Define target library
 add_library(UltraNerfPlugin SHARED ${Sources} ${UiHeaders} ${Headers})
 target_include_directories(UltraNerfPlugin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
-set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
-set(CMAKE_CXX_VISIBILITY_PRESET hidden)
-set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 # Link against the ImFusionLib and selected modules/plugins
 target_link_libraries(UltraNerfPlugin PUBLIC
+  ${TORCH_LIBRARIES}
+  ${OpenCV_LIBS}
+  ${TORCH_CUDA_LIBRARIES}
   ImFusionLib
   UltraNerfTorch
-  ${TORCH_LIBRARIES}
 )
 set_property(TARGET UltraNerfPlugin PROPERTY CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

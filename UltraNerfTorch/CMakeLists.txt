@@ -5,8 +5,8 @@ project(UltraNerfTorch)
 add_compile_options("-fPIC")
 add_compile_options("-fno-sized-deallocation")
 
-# Add a library with the above sources
-add_library(${PROJECT_NAME} src/main.cpp src/NeRFModel.cpp src/UltraNeRFRenderer.cpp src/NeRFUtils.cpp)
+# Add a library with the sources
+add_library(${PROJECT_NAME} src/NeRFModel.cpp src/UltraNeRFRenderer.cpp src/NeRFUtils.cpp)
 find_package(Torch REQUIRED)
 include_directories(SYSTEM ${TORCH_INCLUDE_DIRS})
 
@@ -19,4 +19,4 @@ target_include_directories( ${PROJECT_NAME}
     PUBLIC ${PROJECT_SOURCE_DIR}/include
 )
 
-target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES} ${OpenCV_LIBS} ${TORCH_CUDA_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${TORCH_LIBRARIES} ${OpenCV_LIBS} ${TORCH_CUDA_LIBRARIES})

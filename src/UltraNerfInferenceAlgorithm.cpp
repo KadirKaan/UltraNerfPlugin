@@ -101,4 +101,4 @@ namespace ImFusion
 			return;
 		p->setParam("modelPath", model_path, "");
 	}
-}
+};
