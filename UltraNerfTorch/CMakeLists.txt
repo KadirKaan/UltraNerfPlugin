@@ -6,7 +6,8 @@ add_compile_options("-fPIC")
 add_compile_options("-fno-sized-deallocation")
 
 # Add a library with the sources
-add_library(${PROJECT_NAME} src/NeRFModel.cpp src/UltraNeRFRenderer.cpp src/NeRFUtils.cpp)
+add_library(${PROJECT_NAME} SHARED)
+target_sources(${PROJECT_NAME} PRIVATE src/NeRFModel.cpp src/UltraNeRFRenderer.cpp src/NeRFUtils.cpp)
 find_package(Torch REQUIRED)
 include_directories(SYSTEM ${TORCH_INCLUDE_DIRS})
 
