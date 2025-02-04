@@ -51,11 +51,13 @@ namespace ImFusion
 	{
 		// set generic error status until we have finished
 		m_status = static_cast<int>(Status::Error);
+		// TODO: enums in QT
 		torch::Tensor rays = NeRFUtils::generate_rays(this->point_pair.first, this->point_pair.second, 512, BLINE_ORIGIN::TOP);
 		torch::Tensor rays_o = rays.index({torch::indexing::Slice(), torch::indexing::Slice(0, 3)});
 		torch::Tensor rays_d = rays.index({torch::indexing::Slice(), torch::indexing::Slice(3, 6)});
 		torch::Dict<std::string, torch::Tensor> render_results = renderer_ptr.get()->render_nerf(std::make_pair(rays_o, rays_d), std::nullopt);
 		torch::Tensor output = renderer_ptr.get()->get_output_data(render_results);
+		// TODO: torch tensor to imfusion image set conversion, hard to implement with no option to check
 		m_imgOut = std::make_unique<SharedImageSet>();
 		// set algorithm status to success
 		m_status = static_cast<int>(Status::Success);
