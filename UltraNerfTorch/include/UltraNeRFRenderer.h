@@ -15,6 +15,7 @@ public:
     virtual torch::Dict<std::string, torch::Tensor> render_nerf(const std::optional<std::pair<torch::Tensor, torch::Tensor>> rays,
                                                                 const std::optional<torch::Tensor> c2w);
     virtual torch::Tensor get_output_data(torch::Dict<std::string, torch::Tensor> output_dict);
+    std::shared_ptr<NeRFModel> get_model_ptr() { return std::move(model_ptr_); }
 
 private:
     std::pair<torch::Tensor, torch::Tensor> generate_linear_us_rays(const torch::Tensor &c2w);
@@ -28,8 +29,8 @@ private:
     virtual torch::Dict<std::string, torch::Tensor> process_raw_rays(torch::Tensor raw);
     int chunk = 1024 * 32;
     torch::Tensor gaussian_kernel;
-    std::unique_ptr<NeRFModel> model_ptr_;
-    std::unique_ptr<torch::Dict<std::string, torch::Tensor>> result_dict_ptr_;
+    std::shared_ptr<NeRFModel> model_ptr_;
+    std::shared_ptr<torch::Dict<std::string, torch::Tensor>> result_dict_ptr_;
     int H;
     int W;
     float sw;

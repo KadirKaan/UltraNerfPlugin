@@ -9,20 +9,6 @@ namespace ImFusion
 {
 	class SharedImageSet;
 
-	enum class BLINE_ORIGIN : int
-	{
-		TOP = 0,
-		LEFT = 1,
-		RIGHT = 2,
-		BOTTOM = 3
-	};
-	struct Point
-	{
-		float x;
-		float y;
-		float z;
-		Point(float x, float y, float z) : x(x), y(y), z(z) {};
-	};
 	class UltraNerfInferenceAlgorithm : public Algorithm
 	{
 	public:

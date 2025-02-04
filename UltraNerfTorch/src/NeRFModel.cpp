@@ -23,7 +23,7 @@ NeRFModel::NeRFModel(const torch::Device &device,
           .max_freq_log2 = embedding_level_ - 1,
           .num_freqs = embedding_level_,
           .log_sampling = true,
-          .periodic_fns = {sin_fn, cos_fn},
+          .periodic_fns = {NeRFUtils::sin_fn, NeRFUtils::cos_fn},
       })),
       torch::nn::Module("NeRFModel")
 {

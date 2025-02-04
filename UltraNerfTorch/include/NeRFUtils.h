@@ -22,12 +22,16 @@ enum class BLINE_ORIGIN
     LEFT,
     RIGHT
 };
-torch::Device get_device();
-torch::Tensor create_gaussian_kernel(int size, float mean, float std);
-torch::Tensor raw2attenuation(torch::Tensor raw, torch::Tensor dists);
-torch::Tensor sin_fn(const torch::Tensor &x);
-torch::Tensor cos_fn(const torch::Tensor &x);
-void accumulate_rays(torch::Dict<std::string, torch::Tensor> &render_results, torch::Dict<std::string, torch::Tensor> batch_render_results);
-torch::Tensor generate_rays(Point upper_point, Point lower_point, int num_rays, BLINE_ORIGIN origin);
-cv::Mat tensor_to_grayscale_opencv(const torch::Tensor &tensor);
+class NeRFUtils
+{
+public:
+    static torch::Device get_device();
+    static torch::Tensor create_gaussian_kernel(int size, float mean, float std);
+    static torch::Tensor raw2attenuation(torch::Tensor raw, torch::Tensor dists);
+    static torch::Tensor sin_fn(const torch::Tensor &x);
+    static torch::Tensor cos_fn(const torch::Tensor &x);
+    static void accumulate_rays(torch::Dict<std::string, torch::Tensor> &render_results, torch::Dict<std::string, torch::Tensor> batch_render_results);
+    static torch::Tensor generate_rays(Point upper_point, Point lower_point, int num_rays, BLINE_ORIGIN origin);
+    static cv::Mat tensor_to_grayscale_opencv(const torch::Tensor &tensor);
+};
 #endif

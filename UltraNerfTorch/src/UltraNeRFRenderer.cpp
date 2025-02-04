@@ -6,7 +6,7 @@ using namespace torch::indexing;
 UltraNeRFRenderer::UltraNeRFRenderer(NeRFModel model, int H, int W, float sw, float sh)
     : H{H}, W{W}, sw{sw}, sh{sh}, model_ptr_{std::make_unique<NeRFModel>(model)}
 {
-    this->gaussian_kernel = create_gaussian_kernel(3, 0.0, 1.0);
+    this->gaussian_kernel = NeRFUtils::create_gaussian_kernel(3, 0.0, 1.0);
 };
 std::pair<torch::Tensor, torch::Tensor> UltraNeRFRenderer::get_rays(const std::optional<torch::Tensor> &c2w,
                                                                     const std::optional<std::pair<torch::Tensor, torch::Tensor>> &input_rays)
@@ -215,7 +215,7 @@ torch::Dict<std::string, torch::Tensor> UltraNeRFRenderer::process_raw_rays(torc
 
     // Attenuation
     torch::Tensor attenuation_coeff = torch::abs(raw.index({torch::indexing::Ellipsis, 0}));
-    torch::Tensor attenuation = raw2attenuation(attenuation_coeff, dists);
+    torch::Tensor attenuation = NeRFUtils::raw2attenuation(attenuation_coeff, dists);
     attenuation = attenuation.permute({0, 1, 3, 2});
     torch::Tensor attenuation_total = cumprod_exclusive(attenuation);
     attenuation_total = attenuation_total.permute({0, 1, 3, 2});
