@@ -57,6 +57,8 @@ set(TORCH_INSTALL_PREFIX "UltraNerfTorch/libtorch")
 set(CMAKE_PREFIX_PATH ${TORCH_INSTALL_PREFIX})
 find_package(Torch REQUIRED)
 
+find_package(Python3 COMPONENTS Development REQUIRED)
+
 # Make sure TORCH_API_INCLUDE_EXTENSION_H is defined
 add_definitions(-DTORCH_API_INCLUDE_EXTENSION_H)
 
@@ -71,6 +73,7 @@ endif()
 add_library(UltraNerfPlugin SHARED ${Sources} ${UiHeaders} ${Headers})
 
 target_include_directories(UltraNerfPlugin 
+    PRIVATE ${Python3_INCLUDE_DIRS}
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
     PRIVATE ${OpenCV_INCLUDE_DIRS}
     PRIVATE ${TORCH_INCLUDE_DIRS}
@@ -78,10 +81,11 @@ target_include_directories(UltraNerfPlugin
 
 # Link libraries
 target_link_libraries(UltraNerfPlugin
-    PRIVATE UltraNerfTorch
+    PRIVATE Python3::Python
     PRIVATE ${TORCH_LIBRARIES}
     PRIVATE ${OpenCV_LIBS}
     PRIVATE ${TORCH_CUDA_LIBRARIES}
+    PRIVATE UltraNerfTorch
     PRIVATE ImFusionLib
 )
 
