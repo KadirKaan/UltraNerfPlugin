@@ -1,64 +1,94 @@
-# Define a new CMake project for the demo plugin
 cmake_minimum_required(VERSION 3.5.0)
 project(UltraNerfPlugin)
+
+# Compiler options
 add_compile_options("-fPIC")
 add_compile_options("-fno-sized-deallocation")
 
-# Locate the ImFusion SDK.
+# Force static linking for Torch before anything else
+set(TORCH_STATIC ON)
+set(BUILD_SHARED_LIBS OFF)
+
+# Make sure we're using the same runtime library
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
+
+# Locate the ImFusion SDK
 find_package(ImFusionLib REQUIRED)
 
-# Enable automatic MOC, RCC and UIC preprocessing for Qt
+# Qt settings
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+# Include directories
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/src)
+
+# Add UltraNerfTorch static library
 add_subdirectory(UltraNerfTorch)
 
-# Define and configure the CMake target
+# Source files
 set(Sources
-  src/UltraNerfTrainingAlgorithm.cpp
-  src/UltraNerfTrainingController.cpp
-  src/UltraNerfInferenceAlgorithm.cpp
-  src/UltraNerfInferenceController.cpp
-  src/UltraNerfFactory.cpp
-  src/UltraNerfPlugin.cpp
-  )
+    src/UltraNerfTrainingAlgorithm.cpp
+    src/UltraNerfTrainingController.cpp
+    src/UltraNerfInferenceAlgorithm.cpp
+    src/UltraNerfInferenceController.cpp
+    src/UltraNerfFactory.cpp
+    src/UltraNerfPlugin.cpp
+)
+
 set(Headers
-  include/UltraNerfTrainingAlgorithm.h
-  include/UltraNerfTrainingController.h
-  include/UltraNerfInferenceAlgorithm.h
-  include/UltraNerfInferenceController.h
-  include/UltraNerfFactory.h
-  include/UltraNerfPlugin.h
-  )
+    include/UltraNerfTrainingAlgorithm.h
+    include/UltraNerfTrainingController.h
+    include/UltraNerfInferenceAlgorithm.h
+    include/UltraNerfInferenceController.h
+    include/UltraNerfFactory.h
+    include/UltraNerfPlugin.h
+)
+
 set(UiSources
-	src/UltraNerfTrainingController.ui
-  src/UltraNerfInferenceController.ui
+    src/UltraNerfTrainingController.ui
+    src/UltraNerfInferenceController.ui
 )
 
-# define torch library files ------------------------------------------------
-list(APPEND CMAKE_PREFIX_PATH "UltraNerfTorch/libtorch")
+# Torch configuration
+set(TORCH_INSTALL_PREFIX "UltraNerfTorch/libtorch")
+set(CMAKE_PREFIX_PATH ${TORCH_INSTALL_PREFIX})
 find_package(Torch REQUIRED)
-include_directories(SYSTEM ${TORCH_INCLUDE_DIRS})
 
-# Define target library
+# Make sure TORCH_API_INCLUDE_EXTENSION_H is defined
+add_definitions(-DTORCH_API_INCLUDE_EXTENSION_H)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+
+# Find OpenCV if not already found
+if(NOT OpenCV_FOUND)
+    find_package(OpenCV REQUIRED)
+endif()
+
+# Define plugin as shared library
 add_library(UltraNerfPlugin SHARED ${Sources} ${UiHeaders} ${Headers})
-target_include_directories(UltraNerfPlugin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-# Link against the ImFusionLib and selected modules/plugins
-target_link_libraries(UltraNerfPlugin PUBLIC
-  ${TORCH_LIBRARIES}
-  ${OpenCV_LIBS}
-  ${TORCH_CUDA_LIBRARIES}
-  ImFusionLib
-  UltraNerfTorch
+
+target_include_directories(UltraNerfPlugin 
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE ${OpenCV_INCLUDE_DIRS}
+    PRIVATE ${TORCH_INCLUDE_DIRS}
 )
+
+# Link libraries
+target_link_libraries(UltraNerfPlugin
+    PRIVATE UltraNerfTorch
+    PRIVATE ${TORCH_LIBRARIES}
+    PRIVATE ${OpenCV_LIBS}
+    PRIVATE ${TORCH_CUDA_LIBRARIES}
+    PRIVATE ImFusionLib
+)
+
+# C++ standard settings
 set_property(TARGET UltraNerfPlugin PROPERTY CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# Define output target directories and provide instructions on how to launch
-# the ImFusion Suite with the built custom plugin.
-# These functions are provided by the ImFusionLib target config. 
+
+# ImFusion specific settings
 imfusion_set_common_target_properties()
 imfusion_provide_ide_instructions()
-
