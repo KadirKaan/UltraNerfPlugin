@@ -32,9 +32,6 @@ find_package(OpenCV REQUIRED)
 include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
 
 find_package(Python3 COMPONENTS Development REQUIRED)
-target_include_directories(${PROJECT_NAME} PRIVATE ${Python3_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PRIVATE Python3::Python)
-
 # Set compiler flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
@@ -42,10 +39,12 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 # Include directories
 target_include_directories(${PROJECT_NAME}
     PUBLIC ${PROJECT_SOURCE_DIR}/include
+    ${Python3_INCLUDE_DIRS}
 )
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME} PUBLIC
+    Python3::Python
     ${TORCH_LIBRARIES}
     ${OpenCV_LIBS}
     ${TORCH_CUDA_LIBRARIES}
